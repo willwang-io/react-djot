@@ -379,7 +379,49 @@ function renderTable(
   footnoteState: FootnoteState | undefined,
   key?: React.Key
 ): React.ReactNode {
-  const children = renderChildren(node.children, components, footnoteState);
+  const captionChildren: React.ReactNode[] = [];
+  const headRows: React.ReactNode[] = [];
+  const bodyRows: React.ReactNode[] = [];
+  const otherChildren: React.ReactNode[] = [];
+
+  for (const [index, child] of node.children.entries()) {
+    const rendered = renderNode(child, {
+      components,
+      footnoteState,
+      key: index
+    });
+
+    if (child.tag === "caption") {
+      captionChildren.push(rendered);
+      continue;
+    }
+
+    if (child.tag === "row") {
+      if (child.head && bodyRows.length === 0) {
+        headRows.push(rendered);
+      } else {
+        bodyRows.push(rendered);
+      }
+      continue;
+    }
+
+    otherChildren.push(rendered);
+  }
+
+  const children: React.ReactNode[] = [...captionChildren];
+
+  if (headRows.length > 0) {
+    children.push(createElement("thead", { key: "thead" }, headRows));
+  }
+
+  if (bodyRows.length > 0) {
+    children.push(createElement("tbody", { key: "tbody" }, bodyRows));
+  }
+
+  if (otherChildren.length > 0) {
+    children.push(...otherChildren);
+  }
+
   return renderWithOverride(
     pickComponent(components, "table"),
     "table",

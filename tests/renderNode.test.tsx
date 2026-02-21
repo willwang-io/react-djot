@@ -79,7 +79,7 @@ describe("renderNode", () => {
       ]
     };
 
-    expect(toHtml(node)).toBe("<table><tr><td>1</td><td>2</td></tr></table>");
+    expect(toHtml(node)).toBe("<table><tbody><tr><td>1</td><td>2</td></tr></tbody></table>");
   });
 
   it("renders pipe tables with header and alignments", () => {
@@ -145,7 +145,7 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node)).toBe(
-      '<table><tr><th>fruit</th><th style="text-align:right">price</th></tr><tr><td>apple</td><td style="text-align:right">4</td></tr><tr><td>banana</td><td style="text-align:right">10</td></tr></table>'
+      '<table><thead><tr><th>fruit</th><th style="text-align:right">price</th></tr></thead><tbody><tr><td>apple</td><td style="text-align:right">4</td></tr><tr><td>banana</td><td style="text-align:right">10</td></tr></tbody></table>'
     );
   });
 
@@ -585,7 +585,9 @@ describe("renderNode", () => {
       cell: ({ align, children }) => <td data-align={align}>{children}</td>
     };
 
-    expect(toHtml(node, components)).toBe('<table><tr><td data-align="right">2</td></tr></table>');
+    expect(toHtml(node, components)).toBe(
+      '<table><tbody><tr><td data-align="right">2</td></tr></tbody></table>'
+    );
   });
 
   it("uses code override for verbatim by default", () => {
