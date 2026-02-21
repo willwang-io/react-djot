@@ -12,7 +12,19 @@ export interface DjotParentNode extends DjotBaseNode {
 }
 
 export interface DjotDocNode extends DjotParentNode {
+  autoReferences?: Record<string, unknown>;
+  footnotes?: Record<string, DjotFootnoteNode>;
+  references?: Record<string, unknown>;
   tag: "doc";
+}
+
+export interface DjotSectionNode extends DjotParentNode {
+  autoAttributes?: DjotAttributes;
+  tag: "section";
+}
+
+export interface DjotDivNode extends DjotParentNode {
+  tag: "div";
 }
 
 export interface DjotParaNode extends DjotParentNode {
@@ -30,6 +42,99 @@ export interface DjotEmphNode extends DjotParentNode {
 
 export interface DjotStrongNode extends DjotParentNode {
   tag: "strong";
+}
+
+export interface DjotMarkNode extends DjotParentNode {
+  tag: "mark";
+}
+
+export interface DjotHighlightedNode extends DjotParentNode {
+  tag: "highlighted";
+}
+
+export interface DjotSuperscriptNode extends DjotParentNode {
+  tag: "superscript";
+}
+
+export interface DjotSupeNode extends DjotParentNode {
+  tag: "supe";
+}
+
+export interface DjotSubscriptNode extends DjotParentNode {
+  tag: "subscript";
+}
+
+export interface DjotInsertNode extends DjotParentNode {
+  tag: "insert";
+}
+
+export interface DjotDeleteNode extends DjotParentNode {
+  tag: "delete";
+}
+
+export type DjotTableAlignment = "default" | "left" | "right" | "center" | (string & {});
+
+export interface DjotTableNode extends DjotParentNode {
+  tag: "table";
+}
+
+export interface DjotCaptionNode extends DjotParentNode {
+  tag: "caption";
+}
+
+export interface DjotRowNode extends DjotParentNode {
+  head: boolean;
+  tag: "row";
+}
+
+export interface DjotCellNode extends DjotParentNode {
+  align: DjotTableAlignment;
+  head: boolean;
+  tag: "cell";
+}
+
+export interface DjotFootnoteReferenceNode extends DjotBaseNode {
+  tag: "footnote_reference";
+  text: string;
+}
+
+export interface DjotFootnoteNode extends DjotParentNode {
+  label: string;
+  tag: "footnote";
+}
+
+export interface DjotDoubleQuotedNode extends DjotParentNode {
+  tag: "double_quoted";
+}
+
+export interface DjotSingleQuotedNode extends DjotParentNode {
+  tag: "single_quoted";
+}
+
+export type DjotSmartPunctuationType =
+  | "left_double_quote"
+  | "right_double_quote"
+  | "left_single_quote"
+  | "right_single_quote"
+  | "em_dash"
+  | "en_dash"
+  | "ellipses"
+  | (string & {});
+
+export interface DjotSmartPunctuationNode extends DjotBaseNode {
+  tag: "smart_punctuation";
+  text: string;
+  type: DjotSmartPunctuationType;
+}
+
+export interface DjotInlineMathNode extends DjotBaseNode {
+  tag: "inline_math";
+  text: string;
+}
+
+export interface DjotDisplayMathNode extends DjotBaseNode {
+  tag: "display_math";
+  text: string;
 }
 
 export interface DjotCodeNode extends DjotBaseNode {
@@ -70,12 +175,21 @@ export interface DjotBlockquoteNode extends DjotParentNode {
   tag: "blockquote";
 }
 
+export interface DjotBlockQuoteNode extends DjotParentNode {
+  tag: "block_quote";
+}
+
 export interface DjotThematicBreakNode extends DjotBaseNode {
   tag: "thematic_break";
 }
 
 export interface DjotStrNode extends DjotBaseNode {
   tag: "str";
+  text: string;
+}
+
+export interface DjotVerbatimNode extends DjotBaseNode {
+  tag: "verbatim";
   text: string;
 }
 
@@ -89,10 +203,30 @@ export interface DjotHardBreakNode extends DjotBaseNode {
 
 export type DjotNode =
   | DjotDocNode
+  | DjotSectionNode
+  | DjotDivNode
   | DjotParaNode
   | DjotHeadingNode
   | DjotEmphNode
   | DjotStrongNode
+  | DjotMarkNode
+  | DjotHighlightedNode
+  | DjotSuperscriptNode
+  | DjotSupeNode
+  | DjotSubscriptNode
+  | DjotInsertNode
+  | DjotDeleteNode
+  | DjotTableNode
+  | DjotCaptionNode
+  | DjotRowNode
+  | DjotCellNode
+  | DjotFootnoteReferenceNode
+  | DjotFootnoteNode
+  | DjotDoubleQuotedNode
+  | DjotSingleQuotedNode
+  | DjotSmartPunctuationNode
+  | DjotInlineMathNode
+  | DjotDisplayMathNode
   | DjotCodeNode
   | DjotCodeBlockNode
   | DjotLinkNode
@@ -101,8 +235,10 @@ export type DjotNode =
   | DjotOrderedListNode
   | DjotListItemNode
   | DjotBlockquoteNode
+  | DjotBlockQuoteNode
   | DjotThematicBreakNode
   | DjotStrNode
+  | DjotVerbatimNode
   | DjotSoftBreakNode
   | DjotHardBreakNode;
 
@@ -117,6 +253,8 @@ interface DjotNodePropsBase<Tag extends DjotNodeTag> {
 
 export interface DjotComponentPropsMap {
   doc: DjotNodePropsBase<"doc">;
+  section: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"section">;
+  div: React.HTMLAttributes<HTMLDivElement> & DjotNodePropsBase<"div">;
   para: React.HTMLAttributes<HTMLParagraphElement> & DjotNodePropsBase<"para">;
   heading: React.HTMLAttributes<HTMLHeadingElement> &
     DjotNodePropsBase<"heading"> & {
@@ -124,8 +262,75 @@ export interface DjotComponentPropsMap {
     };
   emph: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"emph">;
   strong: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"strong">;
+  mark: React.HTMLAttributes<HTMLElement> &
+    Omit<DjotNodePropsBase<"mark">, "node"> & {
+      node: DjotMarkNode | DjotHighlightedNode;
+    };
+  highlighted: React.HTMLAttributes<HTMLElement> &
+    Omit<DjotNodePropsBase<"highlighted">, "node"> & {
+      node: DjotMarkNode | DjotHighlightedNode;
+    };
+  superscript: React.HTMLAttributes<HTMLElement> &
+    Omit<DjotNodePropsBase<"superscript">, "node"> & {
+      node: DjotSuperscriptNode | DjotSupeNode;
+    };
+  supe: React.HTMLAttributes<HTMLElement> &
+    Omit<DjotNodePropsBase<"supe">, "node"> & {
+      node: DjotSuperscriptNode | DjotSupeNode;
+    };
+  subscript: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"subscript">;
+  insert: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"insert">;
+  delete: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"delete">;
+  table: React.TableHTMLAttributes<HTMLTableElement> & DjotNodePropsBase<"table">;
+  caption: React.HTMLAttributes<HTMLTableCaptionElement> & DjotNodePropsBase<"caption">;
+  row: React.HTMLAttributes<HTMLTableRowElement> &
+    DjotNodePropsBase<"row"> & {
+      head: boolean;
+    };
+  cell: React.TdHTMLAttributes<HTMLTableCellElement> &
+    Omit<DjotNodePropsBase<"cell">, "node"> & {
+      align: DjotTableAlignment;
+      head: boolean;
+      node: DjotCellNode;
+    };
+  footnote_reference: React.AnchorHTMLAttributes<HTMLAnchorElement> &
+    DjotNodePropsBase<"footnote_reference"> & {
+      index: number;
+      label: string;
+    };
+  footnote: React.LiHTMLAttributes<HTMLLIElement> &
+    Omit<DjotNodePropsBase<"footnote">, "node"> & {
+      index: number;
+      label: string;
+      node: DjotFootnoteNode;
+    };
+  endnotes: React.HTMLAttributes<HTMLElement> & {
+    children?: React.ReactNode;
+    node: DjotDocNode;
+    order: string[];
+  };
+  double_quoted: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"double_quoted">;
+  single_quoted: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"single_quoted">;
+  smart_punctuation: DjotNodePropsBase<"smart_punctuation"> & {
+    kind: DjotSmartPunctuationType;
+    value: string;
+  };
+  inline_math: React.HTMLAttributes<HTMLElement> &
+    DjotNodePropsBase<"inline_math"> & {
+      value: string;
+    };
+  display_math: React.HTMLAttributes<HTMLElement> &
+    DjotNodePropsBase<"display_math"> & {
+      value: string;
+    };
   code: React.HTMLAttributes<HTMLElement> &
-    DjotNodePropsBase<"code"> & {
+    Omit<DjotNodePropsBase<"code">, "node"> & {
+      node: DjotCodeNode | DjotVerbatimNode;
+      value: string;
+    };
+  verbatim: React.HTMLAttributes<HTMLElement> &
+    Omit<DjotNodePropsBase<"verbatim">, "node"> & {
+      node: DjotCodeNode | DjotVerbatimNode;
       value: string;
     };
   code_block: React.HTMLAttributes<HTMLPreElement> &
@@ -142,7 +347,13 @@ export interface DjotComponentPropsMap {
   ordered_list: React.OlHTMLAttributes<HTMLOListElement> & DjotNodePropsBase<"ordered_list">;
   list_item: React.LiHTMLAttributes<HTMLLIElement> & DjotNodePropsBase<"list_item">;
   blockquote: React.BlockquoteHTMLAttributes<HTMLQuoteElement> &
-    DjotNodePropsBase<"blockquote">;
+    Omit<DjotNodePropsBase<"blockquote">, "node"> & {
+      node: DjotBlockquoteNode | DjotBlockQuoteNode;
+    };
+  block_quote: React.BlockquoteHTMLAttributes<HTMLQuoteElement> &
+    Omit<DjotNodePropsBase<"block_quote">, "node"> & {
+      node: DjotBlockquoteNode | DjotBlockQuoteNode;
+    };
   thematic_break: React.HTMLAttributes<HTMLHRElement> & DjotNodePropsBase<"thematic_break">;
   str: DjotNodePropsBase<"str"> & {
     value: string;

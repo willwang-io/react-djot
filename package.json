@@ -1,6 +1,6 @@
 {
-  "name": "react-djot",
-  "version": "0.1.0",
+  "name": "@willwang-io/react-djot",
+  "version": "0.1.5",
   "description": "Render Djot to React with a react-markdown style component override API.",
   "license": "MIT",
   "type": "module",
@@ -51,5 +51,16 @@
     "tsup": "^8.2.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willwang-io/react-djot.git"
+  },
+  "homepage": "https://github.com/willwang-io/react-djot#readme",
+  "bugs": {
+    "url": "https://github.com/willwang-io/react-djot/issues"
   }
 }
