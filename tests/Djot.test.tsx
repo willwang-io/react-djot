@@ -1,0 +1,46 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { Djot, compileDjot } from "../src";
+import type { DjotNode } from "../src";
+
+describe("Djot", () => {
+  it("renders from source string children", () => {
+    const html = renderToStaticMarkup(<Djot>hello</Djot>);
+    expect(html).toBe("<p>hello</p>");
+  });
+
+  it("returns null for empty source children", () => {
+    const html = renderToStaticMarkup(<Djot>{""}</Djot>);
+    expect(html).toBe("");
+  });
+
+  it("renders precompiled ast when ast prop is provided", () => {
+    const ast: DjotNode = {
+      tag: "doc",
+      children: [{ tag: "para", children: [{ tag: "str", text: "from ast" }] }]
+    };
+
+    const html = renderToStaticMarkup(<Djot ast={ast} />);
+    expect(html).toBe("<p>from ast</p>");
+  });
+});
+
+describe("compileDjot", () => {
+  it("returns the same ast reference for repeated source", () => {
+    const first = compileDjot("alpha");
+    const second = compileDjot("alpha");
+
+    expect(second).toBe(first);
+  });
+
+  it("evicts the least recently used source when cache is full", () => {
+    const first = compileDjot("seed");
+
+    for (let index = 0; index < 100; index += 1) {
+      compileDjot(`source-${index}`);
+    }
+
+    const again = compileDjot("seed");
+    expect(again).not.toBe(first);
+  });
+});

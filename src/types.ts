@@ -368,7 +368,16 @@ export type DjotComponents = Partial<{
   [K in keyof DjotComponentPropsMap]: React.ElementType<DjotComponentPropsMap[K]>;
 }>;
 
-export interface DjotProps {
-  children?: string | null | undefined;
+interface DjotSharedProps {
   components?: DjotComponents | undefined;
 }
+
+export type DjotProps =
+  | (DjotSharedProps & {
+      ast?: never;
+      children?: string | null | undefined;
+    })
+  | (DjotSharedProps & {
+      ast: DjotNode;
+      children?: never;
+    });
