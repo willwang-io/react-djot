@@ -63,6 +63,40 @@ describe("Djot", () => {
     );
   });
 
+  it("suppresses paragraph wrappers for tight bullet lists", () => {
+    const source = `- one
+- two`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe("<ul><li>one</li><li>two</li></ul>");
+  });
+
+  it("preserves paragraph wrappers for loose bullet lists", () => {
+    const source = `- one
+
+- two`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe("<ul><li><p>one</p></li><li><p>two</p></li></ul>");
+  });
+
+  it("suppresses paragraph wrappers for tight ordered lists", () => {
+    const source = `1. one
+2. two`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe("<ol><li>one</li><li>two</li></ol>");
+  });
+
+  it("preserves paragraph wrappers for loose ordered lists", () => {
+    const source = `1. one
+
+2. two`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe("<ol><li><p>one</p></li><li><p>two</p></li></ol>");
+  });
+
   it("renders escaped space as non-breaking space", () => {
     const html = renderToStaticMarkup(<Djot>{"A\\ B"}</Djot>);
     expect(html).toBe("<p>A\u00a0B</p>");

@@ -4,6 +4,7 @@ import type {
   DjotBaseNode,
   DjotBlockQuoteNode,
   DjotBlockquoteNode,
+  DjotBulletListNode,
   DjotCaptionNode,
   DjotCellNode,
   DjotCodeBlockNode,
@@ -27,6 +28,7 @@ import type {
   DjotInlineMathNode,
   DjotInsertNode,
   DjotLinkNode,
+  DjotListItemNode,
   DjotMarkNode,
   DjotNonBreakingSpaceNode,
   DjotNode,
@@ -59,7 +61,7 @@ export interface RenderNodeOptions {
   components?: DjotComponents | undefined;
   footnoteState?: FootnoteState | undefined;
   key?: React.Key;
-  taskListTight?: boolean | undefined;
+  listTight?: boolean | undefined;
 }
 
 type ComponentKey = keyof DjotComponentPropsMap;
@@ -101,14 +103,14 @@ function renderChildren(
   children: DjotNode[],
   components?: DjotComponents,
   footnoteState?: FootnoteState,
-  taskListTight?: boolean
+  listTight?: boolean
 ): React.ReactNode[] {
   return children.map((child, index) =>
     renderNode(child, {
       components,
       footnoteState,
       key: index,
-      taskListTight
+      listTight
     })
   );
 }
@@ -1435,7 +1437,8 @@ function renderOrderedList(
   footnoteState: FootnoteState | undefined,
   key?: React.Key
 ): React.ReactNode {
-  const children = renderChildren(node.children, components, footnoteState);
+  const tight = node.tight ?? false;
+  const children = renderChildren(node.children, components, footnoteState, tight);
   const start = node.start !== undefined && node.start !== 1 ? node.start : undefined;
   const type = toOrderedListType(node.style);
   return renderWithOverride(
@@ -1447,7 +1450,8 @@ function renderOrderedList(
     },
     {
       node,
-      start
+      start,
+      tight
     },
     key,
     children
@@ -1511,6 +1515,54 @@ function renderDefinitionListItem(
   return createElement(Fragment, withKey({}, key), children);
 }
 
+function renderBulletList(
+  node: DjotBulletListNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const tight = node.tight ?? false;
+  const children = renderChildren(node.children, components, footnoteState, tight);
+  return renderWithOverride(
+    pickComponent(components, "bullet_list"),
+    "ul",
+    {},
+    {
+      node,
+      tight
+    },
+    key,
+    children
+  );
+}
+
+function renderListItem(
+  node: DjotListItemNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  listTight: boolean | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const override = pickComponent(components, "list_item");
+
+  if (override) {
+    const contentChildren = renderChildren(node.children, components, footnoteState);
+    if (typeof override === "string") {
+      return createElement(override, withKey({}, key), contentChildren);
+    }
+    return createElement(override, withKey({ node, tight: listTight }, key), contentChildren);
+  }
+
+  const firstChild = node.children[0];
+  const inlineSource =
+    listTight === true && node.children.length === 1 && firstChild?.tag === "para"
+      ? (firstChild as DjotParentNode).children
+      : node.children;
+  const contentChildren = renderChildren(inlineSource, components, footnoteState);
+
+  return createElement("li", withKey({}, key), contentChildren);
+}
+
 function renderTerm(
   node: DjotTermNode,
   components: DjotComponents | undefined,
@@ -1571,7 +1623,7 @@ function renderTaskListItem(
   node: DjotTaskListItemNode,
   components: DjotComponents | undefined,
   footnoteState: FootnoteState | undefined,
-  taskListTight: boolean | undefined,
+  listTight: boolean | undefined,
   key?: React.Key
 ): React.ReactNode {
   const override = pickComponent(components, "task_list_item");
@@ -1583,7 +1635,7 @@ function renderTaskListItem(
     }
     return createElement(
       override,
-      withKey({ node, checkbox: node.checkbox, tight: taskListTight }, key),
+      withKey({ node, checkbox: node.checkbox, tight: listTight }, key),
       contentChildren
     );
   }
@@ -1592,7 +1644,7 @@ function renderTaskListItem(
   // with the checkbox. Loose task lists preserve paragraph wrappers.
   const firstChild = node.children[0];
   const inlineSource =
-    taskListTight === true && node.children.length === 1 && firstChild?.tag === "para"
+    listTight === true && node.children.length === 1 && firstChild?.tag === "para"
       ? (firstChild as DjotParentNode).children
       : node.children;
   const contentChildren = renderChildren(inlineSource, components, footnoteState);
@@ -1729,9 +1781,9 @@ function renderHardBreak(
 }
 
 export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): React.ReactNode {
-  const { components, footnoteState, key, taskListTight } = options;
+  const { components, footnoteState, key, listTight } = options;
   const children = isParentNode(node)
-    ? renderChildren(node.children, components, footnoteState, taskListTight)
+    ? renderChildren(node.children, components, footnoteState, listTight)
     : undefined;
 
   switch (node.tag) {
@@ -1873,29 +1925,11 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
     case "image":
       return renderImage(node, components, key);
     case "bullet_list":
-      return renderWithOverride(
-        pickComponent(components, "bullet_list"),
-        "ul",
-        {},
-        {
-          node
-        },
-        key,
-        children
-      );
+      return renderBulletList(node, components, footnoteState, key);
     case "ordered_list":
       return renderOrderedList(node, components, footnoteState, key);
     case "list_item":
-      return renderWithOverride(
-        pickComponent(components, "list_item"),
-        "li",
-        {},
-        {
-          node
-        },
-        key,
-        children
-      );
+      return renderListItem(node, components, footnoteState, listTight, key);
     case "definition_list":
       return renderDefinitionList(node, components, footnoteState, key);
     case "definition_list_item":
@@ -1907,7 +1941,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
     case "task_list":
       return renderTaskList(node, components, footnoteState, key);
     case "task_list_item":
-      return renderTaskListItem(node, components, footnoteState, taskListTight, key);
+      return renderTaskListItem(node, components, footnoteState, listTight, key);
     case "blockquote":
       return renderBlockQuote(node, components, footnoteState, key, "blockquote", "block_quote");
     case "block_quote":

@@ -627,6 +627,66 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe('<ol start="3"><li>step</li></ol>');
   });
 
+  it("unwraps single para child in tight bullet_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "bullet_list",
+      tight: true,
+      children: [
+        {
+          tag: "list_item",
+          children: [{ tag: "para", children: [{ tag: "str", text: "one" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<ul><li>one</li></ul>");
+  });
+
+  it("keeps para wrapper in loose bullet_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "bullet_list",
+      tight: false,
+      children: [
+        {
+          tag: "list_item",
+          children: [{ tag: "para", children: [{ tag: "str", text: "one" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<ul><li><p>one</p></li></ul>");
+  });
+
+  it("unwraps single para child in tight ordered_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "ordered_list",
+      tight: true,
+      children: [
+        {
+          tag: "list_item",
+          children: [{ tag: "para", children: [{ tag: "str", text: "one" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<ol><li>one</li></ol>");
+  });
+
+  it("keeps para wrapper in loose ordered_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "ordered_list",
+      tight: false,
+      children: [
+        {
+          tag: "list_item",
+          children: [{ tag: "para", children: [{ tag: "str", text: "one" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<ol><li><p>one</p></li></ol>");
+  });
+
   it("renders list_item", () => {
     const node: DjotNode = {
       tag: "list_item",

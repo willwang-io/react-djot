@@ -190,6 +190,7 @@ export interface DjotImageNode extends DjotParentNode {
 }
 
 export interface DjotBulletListNode extends DjotParentNode {
+  tight?: boolean;
   tag: "bullet_list";
 }
 
@@ -465,9 +466,18 @@ export interface DjotComponentPropsMap {
     DjotNodePropsBase<"image"> & {
       alt?: string;
     };
-  bullet_list: React.HTMLAttributes<HTMLUListElement> & DjotNodePropsBase<"bullet_list">;
-  ordered_list: React.OlHTMLAttributes<HTMLOListElement> & DjotNodePropsBase<"ordered_list">;
-  list_item: React.LiHTMLAttributes<HTMLLIElement> & DjotNodePropsBase<"list_item">;
+  bullet_list: React.HTMLAttributes<HTMLUListElement> &
+    DjotNodePropsBase<"bullet_list"> & {
+      tight?: boolean;
+    };
+  ordered_list: React.OlHTMLAttributes<HTMLOListElement> &
+    DjotNodePropsBase<"ordered_list"> & {
+      tight?: boolean;
+    };
+  list_item: React.LiHTMLAttributes<HTMLLIElement> &
+    DjotNodePropsBase<"list_item"> & {
+      tight?: boolean;
+    };
   definition_list: React.HTMLAttributes<HTMLDListElement> & DjotNodePropsBase<"definition_list">;
   definition_list_item: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"definition_list_item">;
   term: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"term">;
