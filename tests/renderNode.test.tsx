@@ -35,7 +35,28 @@ describe("renderNode", () => {
       ]
     };
 
-    expect(toHtml(node)).toBe("<h1>title</h1><p>body</p>");
+    expect(toHtml(node)).toBe("<section><h1>title</h1><p>body</p></section>");
+  });
+
+  it("renders section with autoAttributes id", () => {
+    const node: DjotNode = {
+      tag: "section",
+      autoAttributes: { id: "Hello-World" },
+      children: [{ tag: "heading", level: 1, children: [{ tag: "str", text: "Hello World" }] }]
+    };
+
+    expect(toHtml(node)).toBe('<section id="Hello-World"><h1>Hello World</h1></section>');
+  });
+
+  it("prefers explicit section attributes over autoAttributes", () => {
+    const node: DjotNode = {
+      tag: "section",
+      autoAttributes: { id: "auto-id" },
+      attributes: { class: "manual", id: "manual-id" },
+      children: [{ tag: "heading", level: 1, children: [{ tag: "str", text: "Hello" }] }]
+    };
+
+    expect(toHtml(node)).toBe('<section id="manual-id" class="manual"><h1>Hello</h1></section>');
   });
 
   it("renders div blocks with class from attributes", () => {

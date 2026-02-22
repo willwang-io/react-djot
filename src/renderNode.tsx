@@ -705,26 +705,20 @@ function renderSection(
   key?: React.Key
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
-  const Component = pickComponent(components, "section");
-
-  if (Component) {
-    if (typeof Component === "string") {
-      return createElement(Component, withKey({}, key), children);
-    }
-
-    return createElement(
-      Component,
-      withKey(
-        {
-          node
-        },
-        key
-      ),
-      children
-    );
-  }
-
-  return createElement(Fragment, withKey({}, key), children);
+  const domProps = {
+    ...toDomPropsFromAttributes(node.autoAttributes),
+    ...toDomPropsFromAttributes(node.attributes)
+  };
+  return renderWithOverride(
+    pickComponent(components, "section"),
+    "section",
+    domProps,
+    {
+      node
+    },
+    key,
+    children
+  );
 }
 
 function renderDiv(

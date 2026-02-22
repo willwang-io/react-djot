@@ -134,6 +134,16 @@ describe("Djot", () => {
     expect(html).toBe("<dl><dt>orange</dt><dd><p>A citrus fruit.</p></dd></dl>");
   });
 
+  it("preserves section auto IDs generated from headings", () => {
+    const source = `# Hello World
+
+## Sub heading`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toContain('<section id="Hello-World">');
+    expect(html).toContain('<section id="Sub-heading">');
+  });
+
 });
 
 describe("compileDjot", () => {
