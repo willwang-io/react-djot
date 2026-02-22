@@ -11,6 +11,9 @@ import type {
   DjotComponentPropsMap,
   DjotComponents,
   DjotDeleteNode,
+  DjotDefinitionListItemNode,
+  DjotDefinitionListNode,
+  DjotDefinitionNode,
   DjotDivNode,
   DjotDoubleQuotedNode,
   DjotDisplayMathNode,
@@ -46,6 +49,7 @@ import type {
   DjotSupeNode,
   DjotTableAlignment,
   DjotTableNode,
+  DjotTermNode,
   DjotUrlNode,
   DjotVerbatimNode
 } from "./types";
@@ -1446,6 +1450,92 @@ function renderOrderedList(
   );
 }
 
+function renderDefinitionList(
+  node: DjotDefinitionListNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const children = renderChildren(node.children, components, footnoteState);
+  return renderWithOverride(
+    pickComponent(components, "definition_list"),
+    "dl",
+    toDomPropsFromAttributes(node.attributes),
+    {
+      node
+    },
+    key,
+    children
+  );
+}
+
+function renderDefinitionListItem(
+  node: DjotDefinitionListItemNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const children = renderChildren(node.children, components, footnoteState);
+  const Component = pickComponent(components, "definition_list_item");
+
+  if (Component) {
+    if (typeof Component === "string") {
+      return createElement(Component, withKey({}, key), children);
+    }
+
+    return createElement(
+      Component,
+      withKey(
+        {
+          node
+        },
+        key
+      ),
+      children
+    );
+  }
+
+  return createElement(Fragment, withKey({}, key), children);
+}
+
+function renderTerm(
+  node: DjotTermNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const children = renderChildren(node.children, components, footnoteState);
+  return renderWithOverride(
+    pickComponent(components, "term"),
+    "dt",
+    toDomPropsFromAttributes(node.attributes),
+    {
+      node
+    },
+    key,
+    children
+  );
+}
+
+function renderDefinition(
+  node: DjotDefinitionNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const children = renderChildren(node.children, components, footnoteState);
+  return renderWithOverride(
+    pickComponent(components, "definition"),
+    "dd",
+    toDomPropsFromAttributes(node.attributes),
+    {
+      node
+    },
+    key,
+    children
+  );
+}
+
 function renderTaskList(
   node: DjotTaskListNode,
   components: DjotComponents | undefined,
@@ -1793,6 +1883,14 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
         key,
         children
       );
+    case "definition_list":
+      return renderDefinitionList(node, components, footnoteState, key);
+    case "definition_list_item":
+      return renderDefinitionListItem(node, components, footnoteState, key);
+    case "term":
+      return renderTerm(node, components, footnoteState, key);
+    case "definition":
+      return renderDefinition(node, components, footnoteState, key);
     case "task_list":
       return renderTaskList(node, components, footnoteState, key);
     case "task_list_item":

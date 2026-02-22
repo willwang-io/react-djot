@@ -142,6 +142,10 @@ export function Example() {
 - `bullet_list`
 - `ordered_list`
 - `list_item`
+- `definition_list`
+- `definition_list_item`
+- `term`
+- `definition`
 - `task_list`
 - `task_list_item`
 - `blockquote` and `block_quote`
@@ -222,6 +226,17 @@ styles in your app CSS:
 .task-list input[type="checkbox"] {
   margin-right: 0.45rem;
 }
+```
+
+## Definition Lists
+
+Definition list items are supported and render to semantic `<dl>/<dt>/<dd>`
+elements:
+
+```djot
+: orange
+
+  A citrus fruit.
 ```
 
 ## Non-breaking Spaces

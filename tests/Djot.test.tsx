@@ -68,6 +68,15 @@ describe("Djot", () => {
     expect(html).toBe("<p>A\u00a0B</p>");
   });
 
+  it("renders definition list syntax", () => {
+    const source = `: orange
+
+  A citrus fruit.`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe("<dl><dt>orange</dt><dd><p>A citrus fruit.</p></dd></dl>");
+  });
+
 });
 
 describe("compileDjot", () => {

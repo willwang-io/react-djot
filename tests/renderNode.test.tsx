@@ -614,6 +614,71 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe("<li>item</li>");
   });
 
+  it("renders definition_list", () => {
+    const node: DjotNode = {
+      tag: "definition_list",
+      children: [
+        {
+          tag: "definition_list_item",
+          children: [
+            { tag: "term", children: [{ tag: "str", text: "orange" }] },
+            {
+              tag: "definition",
+              children: [{ tag: "para", children: [{ tag: "str", text: "A citrus fruit." }] }]
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<dl><dt>orange</dt><dd><p>A citrus fruit.</p></dd></dl>");
+  });
+
+  it("renders definition_list_item without extra wrapper", () => {
+    const node: DjotNode = {
+      tag: "definition_list_item",
+      children: [
+        { tag: "term", children: [{ tag: "str", text: "orange" }] },
+        {
+          tag: "definition",
+          children: [{ tag: "para", children: [{ tag: "str", text: "A citrus fruit." }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<dt>orange</dt><dd><p>A citrus fruit.</p></dd>");
+  });
+
+  it("renders term", () => {
+    const node: DjotNode = {
+      tag: "term",
+      children: [{ tag: "str", text: "orange" }]
+    };
+
+    expect(toHtml(node)).toBe("<dt>orange</dt>");
+  });
+
+  it("renders definition", () => {
+    const node: DjotNode = {
+      tag: "definition",
+      children: [{ tag: "para", children: [{ tag: "str", text: "A citrus fruit." }] }]
+    };
+
+    expect(toHtml(node)).toBe("<dd><p>A citrus fruit.</p></dd>");
+  });
+
+  it("uses definition_list_item override", () => {
+    const node: DjotNode = {
+      tag: "definition_list_item",
+      children: [{ tag: "term", children: [{ tag: "str", text: "orange" }] }]
+    };
+    const components: DjotComponents = {
+      definition_list_item: ({ children }) => <div data-kind="definition-item">{children}</div>
+    };
+
+    expect(toHtml(node, components)).toBe('<div data-kind="definition-item"><dt>orange</dt></div>');
+  });
+
   it("renders task_list with unchecked items", () => {
     const node: DjotNode = {
       tag: "task_list",

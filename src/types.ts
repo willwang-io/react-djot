@@ -202,6 +202,22 @@ export interface DjotListItemNode extends DjotParentNode {
   tag: "list_item";
 }
 
+export interface DjotDefinitionListNode extends DjotParentNode {
+  tag: "definition_list";
+}
+
+export interface DjotDefinitionListItemNode extends DjotParentNode {
+  tag: "definition_list_item";
+}
+
+export interface DjotTermNode extends DjotParentNode {
+  tag: "term";
+}
+
+export interface DjotDefinitionNode extends DjotParentNode {
+  tag: "definition";
+}
+
 export type DjotCheckboxStatus = "checked" | "unchecked";
 
 export interface DjotTaskListNode extends DjotParentNode {
@@ -287,6 +303,10 @@ export type DjotNode =
   | DjotBulletListNode
   | DjotOrderedListNode
   | DjotListItemNode
+  | DjotDefinitionListNode
+  | DjotDefinitionListItemNode
+  | DjotTermNode
+  | DjotDefinitionNode
   | DjotTaskListNode
   | DjotTaskListItemNode
   | DjotBlockquoteNode
@@ -428,6 +448,10 @@ export interface DjotComponentPropsMap {
   bullet_list: React.HTMLAttributes<HTMLUListElement> & DjotNodePropsBase<"bullet_list">;
   ordered_list: React.OlHTMLAttributes<HTMLOListElement> & DjotNodePropsBase<"ordered_list">;
   list_item: React.LiHTMLAttributes<HTMLLIElement> & DjotNodePropsBase<"list_item">;
+  definition_list: React.HTMLAttributes<HTMLDListElement> & DjotNodePropsBase<"definition_list">;
+  definition_list_item: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"definition_list_item">;
+  term: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"term">;
+  definition: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"definition">;
   task_list: React.HTMLAttributes<HTMLUListElement> &
     DjotNodePropsBase<"task_list"> & {
       tight?: boolean;
