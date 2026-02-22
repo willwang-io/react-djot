@@ -605,6 +605,28 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe('<ol start="3"><li>step</li></ol>');
   });
 
+  it("renders ordered_list type for roman style", () => {
+    const node: DjotNode = {
+      tag: "ordered_list",
+      style: "i)",
+      start: 1,
+      children: [{ tag: "list_item", children: [{ tag: "str", text: "step" }] }]
+    };
+
+    expect(toHtml(node)).toBe('<ol type="i"><li>step</li></ol>');
+  });
+
+  it("does not emit type for decimal ordered_list styles", () => {
+    const node: DjotNode = {
+      tag: "ordered_list",
+      style: "(1)",
+      start: 3,
+      children: [{ tag: "list_item", children: [{ tag: "str", text: "step" }] }]
+    };
+
+    expect(toHtml(node)).toBe('<ol start="3"><li>step</li></ol>');
+  });
+
   it("renders list_item", () => {
     const node: DjotNode = {
       tag: "list_item",

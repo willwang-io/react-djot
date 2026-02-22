@@ -31,6 +31,7 @@ import type {
   DjotNonBreakingSpaceNode,
   DjotNode,
   DjotOrderedListNode,
+  DjotOrderedListStyle,
   DjotParentNode,
   DjotTaskListItemNode,
   DjotTaskListNode,
@@ -1435,19 +1436,31 @@ function renderOrderedList(
   key?: React.Key
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
+  const start = node.start !== undefined && node.start !== 1 ? node.start : undefined;
+  const type = toOrderedListType(node.style);
   return renderWithOverride(
     pickComponent(components, "ordered_list"),
     "ol",
     {
-      start: node.start
+      start,
+      type
     },
     {
       node,
-      start: node.start
+      start
     },
     key,
     children
   );
+}
+
+function toOrderedListType(style: DjotOrderedListStyle | undefined): string | undefined {
+  if (!style || /1/.test(style)) {
+    return undefined;
+  }
+
+  const type = style.replace(/[().]/g, "");
+  return type.length > 0 ? type : undefined;
 }
 
 function renderDefinitionList(

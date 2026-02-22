@@ -193,8 +193,28 @@ export interface DjotBulletListNode extends DjotParentNode {
   tag: "bullet_list";
 }
 
+export type DjotOrderedListStyle =
+  | "1."
+  | "1)"
+  | "(1)"
+  | "a."
+  | "a)"
+  | "(a)"
+  | "A."
+  | "A)"
+  | "(A)"
+  | "i."
+  | "i)"
+  | "(i)"
+  | "I."
+  | "I)"
+  | "(I)"
+  | (string & {});
+
 export interface DjotOrderedListNode extends DjotParentNode {
   start?: number;
+  style?: DjotOrderedListStyle;
+  tight?: boolean;
   tag: "ordered_list";
 }
 

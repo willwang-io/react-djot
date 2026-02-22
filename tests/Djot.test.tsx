@@ -68,6 +68,11 @@ describe("Djot", () => {
     expect(html).toBe("<p>A\u00a0B</p>");
   });
 
+  it("maps ordered list style to ol type", () => {
+    const html = renderToStaticMarkup(<Djot>{"i) one\nii) two"}</Djot>);
+    expect(html).toContain('<ol type="i">');
+  });
+
   it("renders definition list syntax", () => {
     const source = `: orange
 
