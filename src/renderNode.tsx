@@ -35,6 +35,7 @@ import type {
   DjotOrderedListNode,
   DjotOrderedListStyle,
   DjotParentNode,
+  DjotReferenceNode,
   DjotTaskListItemNode,
   DjotTaskListNode,
   DjotRawBlockNode,
@@ -67,9 +68,11 @@ export interface RenderNodeOptions {
 type ComponentKey = keyof DjotComponentPropsMap;
 
 interface FootnoteState {
+  autoReferencesByLabel: Record<string, DjotReferenceNode>;
   firstRefIdByLabel: Map<string, string>;
   indexByLabel: Map<string, number>;
   order: string[];
+  referencesByLabel: Record<string, DjotReferenceNode>;
   refCountByLabel: Map<string, number>;
 }
 
@@ -140,11 +143,31 @@ function createFootnoteState(node: DjotDocNode): FootnoteState {
   collectFootnoteReferences(node.children, indexByLabel, order);
 
   return {
+    autoReferencesByLabel: node.autoReferences ?? {},
     firstRefIdByLabel: new Map<string, string>(),
     indexByLabel,
     order,
+    referencesByLabel: node.references ?? {},
     refCountByLabel: new Map<string, number>()
   };
+}
+
+function resolveReferenceDestination(
+  node: Pick<DjotLinkNode, "destination" | "reference"> | Pick<DjotImageNode, "destination" | "reference">,
+  footnoteState: FootnoteState | undefined
+): string | undefined {
+  if (node.destination) {
+    return node.destination;
+  }
+
+  if (!node.reference || !footnoteState) {
+    return undefined;
+  }
+
+  return (
+    footnoteState.referencesByLabel[node.reference]?.destination ??
+    footnoteState.autoReferencesByLabel[node.reference]?.destination
+  );
 }
 
 function ensureFootnoteIndex(label: string, footnoteState: FootnoteState): number {
@@ -1394,7 +1417,7 @@ function renderLink(
   key?: React.Key
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
-  const href = node.destination;
+  const href = resolveReferenceDestination(node, footnoteState);
   return renderWithOverride(
     pickComponent(components, "link"),
     "a",
@@ -1412,10 +1435,11 @@ function renderLink(
 function renderImage(
   node: DjotImageNode,
   components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
   key?: React.Key
 ): React.ReactNode {
   const alt = toAltText(node.children) || undefined;
-  const src = node.destination;
+  const src = resolveReferenceDestination(node, footnoteState);
   return renderWithOverride(
     pickComponent(components, "image"),
     "img",
@@ -1923,7 +1947,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
     case "link":
       return renderLink(node, components, footnoteState, key);
     case "image":
-      return renderImage(node, components, key);
+      return renderImage(node, components, footnoteState, key);
     case "bullet_list":
       return renderBulletList(node, components, footnoteState, key);
     case "ordered_list":

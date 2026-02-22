@@ -573,6 +573,40 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe('<a href="https://example.com">example</a>');
   });
 
+  it("resolves reference-style link destination from doc references", () => {
+    const node: DjotNode = {
+      tag: "doc",
+      references: {
+        bar: { tag: "reference", label: "bar", destination: "https://example.com" }
+      },
+      children: [
+        {
+          tag: "para",
+          children: [{ tag: "link", reference: "bar", children: [{ tag: "str", text: "example" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe('<p><a href="https://example.com">example</a></p>');
+  });
+
+  it("resolves reference-style link destination from doc autoReferences", () => {
+    const node: DjotNode = {
+      tag: "doc",
+      autoReferences: {
+        sec: { tag: "reference", label: "sec", destination: "#Section" }
+      },
+      children: [
+        {
+          tag: "para",
+          children: [{ tag: "link", reference: "sec", children: [{ tag: "str", text: "Section" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe('<p><a href="#Section">Section</a></p>');
+  });
+
   it("renders image", () => {
     const node: DjotNode = {
       tag: "image",
@@ -581,6 +615,23 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node)).toBe('<img alt="logo" src="/logo.png"/>');
+  });
+
+  it("resolves reference-style image destination from doc references", () => {
+    const node: DjotNode = {
+      tag: "doc",
+      references: {
+        logo: { tag: "reference", label: "logo", destination: "/logo.png" }
+      },
+      children: [
+        {
+          tag: "para",
+          children: [{ tag: "image", reference: "logo", children: [{ tag: "str", text: "logo" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe('<p><img alt="logo" src="/logo.png"/></p>');
   });
 
   it("renders bullet_list", () => {

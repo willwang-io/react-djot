@@ -178,6 +178,18 @@ Autolink nodes are supported:
 - `<https://pandoc.org/lua-filters>` -> `<a href="https://pandoc.org/lua-filters">...`
 - `<me@example.com>` -> `<a href="mailto:me@example.com">...`
 
+## Reference Links and Images
+
+Reference-style links and images resolve against document references:
+
+```djot
+[foo][bar]
+![logo][img]
+
+[bar]: https://example.com
+[img]: /logo.png
+```
+
 ## Symbols
 
 Djot symbols (`:alias:`) render literally by default. You can provide a

@@ -47,6 +47,24 @@ describe("Djot", () => {
     );
   });
 
+  it("renders reference-style links", () => {
+    const source = `[foo][bar]
+
+[bar]: https://example.com`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe('<p><a href="https://example.com">foo</a></p>');
+  });
+
+  it("renders reference-style images", () => {
+    const source = `![logo][img]
+
+[img]: /logo.png`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe('<p><img alt="logo" src="/logo.png"/></p>');
+  });
+
   it("renders symbol aliases literally by default", () => {
     const html = renderToStaticMarkup(<Djot>{":smile:"}</Djot>);
     expect(html).toBe("<p>:smile:</p>");

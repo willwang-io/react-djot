@@ -12,9 +12,9 @@ export interface DjotParentNode extends DjotBaseNode {
 }
 
 export interface DjotDocNode extends DjotParentNode {
-  autoReferences?: Record<string, unknown>;
+  autoReferences?: Record<string, DjotReferenceNode>;
   footnotes?: Record<string, DjotFootnoteNode>;
-  references?: Record<string, unknown>;
+  references?: Record<string, DjotReferenceNode>;
   tag: "doc";
 }
 
@@ -179,13 +179,21 @@ export interface DjotEmailNode extends DjotBaseNode {
   text: string;
 }
 
-export interface DjotLinkNode extends DjotParentNode {
+export interface DjotReferenceNode extends DjotBaseNode {
   destination: string;
+  label: string;
+  tag: "reference";
+}
+
+export interface DjotLinkNode extends DjotParentNode {
+  destination?: string;
+  reference?: string;
   tag: "link";
 }
 
 export interface DjotImageNode extends DjotParentNode {
-  destination: string;
+  destination?: string;
+  reference?: string;
   tag: "image";
 }
 
