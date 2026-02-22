@@ -190,6 +190,15 @@ Reference-style links and images resolve against document references:
 [img]: /logo.png
 ```
 
+## Attributes
+
+Inline and block attributes are propagated to default rendered elements.
+Parser-generated `autoAttributes` are also applied, and explicit attributes
+take precedence on conflicts.
+
+For nodes with built-in classes (for example `task_list`, `inline_math`,
+`display_math`), user classes are merged with default classes.
+
 ## Symbols
 
 Djot symbols (`:alias:`) render literally by default. You can provide a

@@ -1,4 +1,4 @@
-import { cloneElement, createElement, Fragment, isValidElement } from "react";
+import { createElement, Fragment } from "react";
 import type React from "react";
 import type {
   DjotBaseNode,
@@ -33,9 +33,7 @@ import type {
   DjotNonBreakingSpaceNode,
   DjotNode,
   DjotOrderedListNode,
-  DjotOrderedListStyle,
   DjotParentNode,
-  DjotReferenceNode,
   DjotTaskListItemNode,
   DjotTaskListNode,
   DjotRawBlockNode,
@@ -44,19 +42,36 @@ import type {
   DjotSectionNode,
   DjotSoftBreakNode,
   DjotSmartPunctuationNode,
-  DjotSmartPunctuationType,
   DjotSingleQuotedNode,
   DjotStrNode,
   DjotSubscriptNode,
   DjotSymbNode,
   DjotSuperscriptNode,
   DjotSupeNode,
-  DjotTableAlignment,
   DjotTableNode,
   DjotTermNode,
   DjotUrlNode,
   DjotVerbatimNode
 } from "./types";
+import {
+  appendBacklink,
+  createFootnoteState,
+  ensureFootnoteIndex,
+  resolveReferenceDestination,
+  resolveReferenceNode,
+  type FootnoteState
+} from "./renderNode.footnotes";
+import { rawHtmlChildren } from "./renderNode.rawHtml";
+import {
+  clampHeadingLevel,
+  mergeDomProps,
+  textAlignForCell,
+  toAltText,
+  toOrderedListType,
+  toSmartPunctuation,
+  toDomPropsFromNode,
+  withKey
+} from "./renderNode.utils";
 
 export interface RenderNodeOptions {
   components?: DjotComponents | undefined;
@@ -205,504 +220,6 @@ function appendBacklink(
 
   next.push(backlink);
   return next;
-}
-
-function toSmartPunctuation(type: DjotSmartPunctuationType, fallback: string): string {
-  switch (type) {
-    case "left_double_quote":
-      return "\u201c";
-    case "right_double_quote":
-      return "\u201d";
-    case "left_single_quote":
-      return "\u2018";
-    case "right_single_quote":
-      return "\u2019";
-    case "em_dash":
-      return "\u2014";
-    case "en_dash":
-      return "\u2013";
-    case "ellipses":
-      return "\u2026";
-    default:
-      return fallback;
-  }
-}
-
-function toAltText(nodes: DjotNode[]): string {
-  let output = "";
-
-  for (const node of nodes) {
-    switch (node.tag) {
-      case "str":
-      case "code":
-      case "verbatim":
-      case "inline_math":
-      case "display_math":
-      case "code_block":
-      case "raw_block":
-      case "raw_inline":
-      case "symb":
-      case "url":
-      case "email":
-        output += node.tag === "symb" ? `:${node.alias}:` : node.text;
-        break;
-      case "non_breaking_space":
-        output += "\u00a0";
-        break;
-      case "smart_punctuation":
-        output += toSmartPunctuation(node.type, node.text);
-        break;
-      case "double_quoted":
-        output += `\u201c${toAltText(node.children)}\u201d`;
-        break;
-      case "single_quoted":
-        output += `\u2018${toAltText(node.children)}\u2019`;
-        break;
-      case "soft_break":
-      case "softbreak":
-        output += " ";
-        break;
-      case "hard_break":
-      case "hardbreak":
-        output += "\n";
-        break;
-      default:
-        if (isParentNode(node)) {
-          output += toAltText(node.children);
-        }
-        break;
-    }
-  }
-
-  return output.trim();
-}
-
-function clampHeadingLevel(level: number): 1 | 2 | 3 | 4 | 5 | 6 {
-  if (level <= 1) {
-    return 1;
-  }
-
-  if (level >= 6) {
-    return 6;
-  }
-
-  return level as 1 | 2 | 3 | 4 | 5 | 6;
-}
-
-function withKey<T extends Record<string, unknown>>(props: T, key?: React.Key): T & { key?: React.Key } {
-  if (key === undefined) {
-    return props;
-  }
-
-  return {
-    ...props,
-    key
-  };
-}
-
-function toDomPropsFromAttributes(attributes: Record<string, string> | undefined): Record<string, unknown> {
-  if (!attributes) {
-    return {};
-  }
-
-  const props: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(attributes)) {
-    if (name === "class") {
-      props.className = value;
-    } else {
-      props[name] = value;
-    }
-  }
-
-  return props;
-}
-
-function toDomPropsFromNode(node: DjotBaseNode): Record<string, unknown> {
-  return {
-    ...toDomPropsFromAttributes(node.autoAttributes),
-    ...toDomPropsFromAttributes(node.attributes)
-  };
-}
-
-function joinClassNames(...values: Array<string | undefined>): string | undefined {
-  const classes = values.filter((value): value is string => Boolean(value && value.length > 0));
-  return classes.length > 0 ? classes.join(" ") : undefined;
-}
-
-function toStyleObject(value: unknown): React.CSSProperties | undefined {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return undefined;
-  }
-
-  return value as React.CSSProperties;
-}
-
-function mergeDomProps(node: DjotBaseNode, extra: Record<string, unknown> = {}): Record<string, unknown> {
-  const nodeProps = toDomPropsFromNode(node);
-  const merged: Record<string, unknown> = {
-    ...extra,
-    ...nodeProps
-  };
-
-  const className = joinClassNames(
-    typeof extra.className === "string" ? extra.className : undefined,
-    typeof nodeProps.className === "string" ? nodeProps.className : undefined
-  );
-
-  if (className) {
-    merged.className = className;
-  }
-
-  const extraStyle = toStyleObject(extra.style);
-  const nodeStyle = toStyleObject(nodeProps.style);
-  if (extraStyle || nodeStyle) {
-    merged.style = {
-      ...(extraStyle ?? {}),
-      ...(nodeStyle ?? {})
-    };
-  }
-
-  return merged;
-}
-
-function textAlignForCell(align: DjotTableAlignment): React.CSSProperties["textAlign"] | undefined {
-  if (align === "left") {
-    return "left";
-  }
-
-  if (align === "right") {
-    return "right";
-  }
-
-  if (align === "center") {
-    return "center";
-  }
-
-  return undefined;
-}
-
-interface RawHtmlAttribute {
-  name: string;
-  value: string;
-}
-
-interface RawHtmlElementNode {
-  attributes: RawHtmlAttribute[];
-  children: RawHtmlNode[];
-  tagName: string;
-  type: "element";
-}
-
-interface RawHtmlTextNode {
-  text: string;
-  type: "text";
-}
-
-type RawHtmlNode = RawHtmlElementNode | RawHtmlTextNode;
-
-const RAW_HTML_ATTR_PATTERN =
-  /([^\s"'=<>`/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
-const RAW_HTML_TOKEN_PATTERN = /<!--[\s\S]*?-->|<\/?[A-Za-z][^>]*>|[^<]+|</g;
-
-const RAW_HTML_BLOCKED_TAGS = new Set([
-  "base",
-  "embed",
-  "form",
-  "iframe",
-  "meta",
-  "object",
-  "script"
-]);
-
-const RAW_HTML_BOOLEAN_ATTRS = new Set([
-  "allowfullscreen",
-  "async",
-  "autofocus",
-  "autoplay",
-  "checked",
-  "controls",
-  "default",
-  "defer",
-  "disabled",
-  "hidden",
-  "loop",
-  "multiple",
-  "muted",
-  "novalidate",
-  "open",
-  "playsinline",
-  "readonly",
-  "required",
-  "reversed",
-  "selected"
-]);
-
-const RAW_HTML_UNSAFE_PROTOCOL = /^\s*(?:javascript:|vbscript:|data:)/i;
-const RAW_HTML_URL_ATTRS = new Set([
-  "action",
-  "formaction",
-  "href",
-  "poster",
-  "src",
-  "xlink:href"
-]);
-
-const RAW_HTML_VOID_TAGS = new Set([
-  "area",
-  "base",
-  "br",
-  "col",
-  "embed",
-  "hr",
-  "img",
-  "input",
-  "link",
-  "meta",
-  "param",
-  "source",
-  "track",
-  "wbr"
-]);
-
-function decodeHtmlEntities(value: string): string {
-  return value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (_match, entity: string) => {
-    if (entity.startsWith("#x") || entity.startsWith("#X")) {
-      const codePoint = Number.parseInt(entity.slice(2), 16);
-      if (!Number.isNaN(codePoint)) {
-        return String.fromCodePoint(codePoint);
-      }
-      return _match;
-    }
-
-    if (entity.startsWith("#")) {
-      const codePoint = Number.parseInt(entity.slice(1), 10);
-      if (!Number.isNaN(codePoint)) {
-        return String.fromCodePoint(codePoint);
-      }
-      return _match;
-    }
-
-    switch (entity) {
-      case "amp":
-        return "&";
-      case "apos":
-        return "'";
-      case "gt":
-        return ">";
-      case "lt":
-        return "<";
-      case "nbsp":
-        return "\u00a0";
-      case "quot":
-        return '"';
-      default:
-        return _match;
-    }
-  });
-}
-
-function parseRawHtmlAttributes(source: string): RawHtmlAttribute[] {
-  const attributes: RawHtmlAttribute[] = [];
-
-  for (const match of source.matchAll(RAW_HTML_ATTR_PATTERN)) {
-    const name = match[1]?.toLowerCase();
-    if (!name) {
-      continue;
-    }
-
-    const rawValue = match[2] ?? match[3] ?? match[4] ?? "";
-    const value = decodeHtmlEntities(rawValue);
-    attributes.push({ name, value });
-  }
-
-  return attributes;
-}
-
-function parseRawHtmlFragment(source: string): RawHtmlNode[] {
-  const root: RawHtmlElementNode = {
-    attributes: [],
-    children: [],
-    tagName: "#root",
-    type: "element"
-  };
-
-  const stack: RawHtmlElementNode[] = [root];
-
-  for (const match of source.matchAll(RAW_HTML_TOKEN_PATTERN)) {
-    const token = match[0];
-
-    if (token.startsWith("<!--")) {
-      continue;
-    }
-
-    if (token === "<") {
-      stack[stack.length - 1]?.children.push({ text: "<", type: "text" });
-      continue;
-    }
-
-    const closingTag = /^<\/\s*([A-Za-z][\w:-]*)\s*>$/.exec(token);
-    if (closingTag) {
-      const closingTagName = closingTag[1];
-      if (!closingTagName) {
-        continue;
-      }
-
-      const tagName = closingTagName.toLowerCase();
-
-      for (let index = stack.length - 1; index > 0; index -= 1) {
-        if (stack[index]?.tagName === tagName) {
-          stack.length = index;
-          break;
-        }
-      }
-
-      continue;
-    }
-
-    const openingTag = /^<\s*([A-Za-z][\w:-]*)([\s\S]*?)>$/.exec(token);
-    if (openingTag) {
-      const openingTagName = openingTag[1];
-      if (!openingTagName) {
-        continue;
-      }
-
-      const tagName = openingTagName.toLowerCase();
-      const rawAttributes = openingTag[2] ?? "";
-      const selfClosing = /\/\s*$/.test(rawAttributes) || RAW_HTML_VOID_TAGS.has(tagName);
-      const attrSource = selfClosing ? rawAttributes.replace(/\/\s*$/, "") : rawAttributes;
-
-      const element: RawHtmlElementNode = {
-        attributes: parseRawHtmlAttributes(attrSource),
-        children: [],
-        tagName,
-        type: "element"
-      };
-
-      stack[stack.length - 1]?.children.push(element);
-
-      if (!selfClosing) {
-        stack.push(element);
-      }
-
-      continue;
-    }
-
-    stack[stack.length - 1]?.children.push({
-      text: decodeHtmlEntities(token),
-      type: "text"
-    });
-  }
-
-  return root.children;
-}
-
-function toCamelCaseCssProperty(name: string): string {
-  return name
-    .trim()
-    .replace(/^-+/, "")
-    .replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
-}
-
-function parseStyleAttribute(value: string): React.CSSProperties | undefined {
-  const style: Record<string, string> = {};
-
-  for (const declaration of value.split(";")) {
-    const separatorIndex = declaration.indexOf(":");
-
-    if (separatorIndex === -1) {
-      continue;
-    }
-
-    const property = toCamelCaseCssProperty(declaration.slice(0, separatorIndex));
-    const propertyValue = declaration.slice(separatorIndex + 1).trim();
-
-    if (!property || !propertyValue) {
-      continue;
-    }
-
-    style[property] = propertyValue;
-  }
-
-  if (Object.keys(style).length === 0) {
-    return undefined;
-  }
-
-  return style as React.CSSProperties;
-}
-
-function toRawHtmlDomProps(attributes: RawHtmlAttribute[]): Record<string, unknown> {
-  const props: Record<string, unknown> = {};
-
-  for (const { name, value } of attributes) {
-    if (name.startsWith("on")) {
-      continue;
-    }
-
-    if (RAW_HTML_URL_ATTRS.has(name) && RAW_HTML_UNSAFE_PROTOCOL.test(value)) {
-      continue;
-    }
-
-    if (name === "class") {
-      props.className = value;
-      continue;
-    }
-
-    if (name === "for") {
-      props.htmlFor = value;
-      continue;
-    }
-
-    if (name === "style") {
-      const style = parseStyleAttribute(value);
-      if (style) {
-        props.style = style;
-      }
-      continue;
-    }
-
-    if (RAW_HTML_BOOLEAN_ATTRS.has(name) && value.length === 0) {
-      props[name] = true;
-      continue;
-    }
-
-    props[name] = value;
-  }
-
-  return props;
-}
-
-function renderRawHtmlNode(node: RawHtmlNode, key: string): React.ReactNode | null {
-  if (node.type === "text") {
-    return node.text;
-  }
-
-  if (RAW_HTML_BLOCKED_TAGS.has(node.tagName)) {
-    return null;
-  }
-
-  const children = renderRawHtmlNodes(node.children, key);
-  return createElement(
-    node.tagName,
-    withKey(toRawHtmlDomProps(node.attributes), key),
-    children.length > 0 ? children : undefined
-  );
-}
-
-function renderRawHtmlNodes(nodes: RawHtmlNode[], keyPrefix: string): React.ReactNode[] {
-  const rendered: React.ReactNode[] = [];
-
-  for (const [index, node] of nodes.entries()) {
-    const next = renderRawHtmlNode(node, `${keyPrefix}-${index}`);
-    if (next !== null) {
-      rendered.push(next);
-    }
-  }
-
-  return rendered;
-}
-
-function rawHtmlChildren(value: string, keyPrefix: string): React.ReactNode[] {
-  return renderRawHtmlNodes(parseRawHtmlFragment(value), keyPrefix);
 }
 
 function renderWithOverride(
@@ -1534,15 +1051,6 @@ function renderOrderedList(
     key,
     children
   );
-}
-
-function toOrderedListType(style: DjotOrderedListStyle | undefined): string | undefined {
-  if (!style || /1/.test(style)) {
-    return undefined;
-  }
-
-  const type = style.replace(/[().]/g, "");
-  return type.length > 0 ? type : undefined;
 }
 
 function renderDefinitionList(
