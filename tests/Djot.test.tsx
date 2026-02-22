@@ -23,6 +23,19 @@ describe("Djot", () => {
     const html = renderToStaticMarkup(<Djot ast={ast} />);
     expect(html).toBe("<p>from ast</p>");
   });
+
+  it("renders raw html blocks from djot source", () => {
+    const source = `~~~=html
+<video width="320" height="240" controls>
+  <source src="movie.mp4" type="video/mp4">
+</video>
+~~~`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toContain('<video width="320" height="240" controls="">');
+    expect(html).toContain('<source src="movie.mp4" type="video/mp4"/>');
+    expect(html).toContain("</video>");
+  });
 });
 
 describe("compileDjot", () => {

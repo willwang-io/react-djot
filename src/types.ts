@@ -148,6 +148,18 @@ export interface DjotCodeBlockNode extends DjotBaseNode {
   text: string;
 }
 
+export interface DjotRawBlockNode extends DjotBaseNode {
+  format: string;
+  tag: "raw_block";
+  text: string;
+}
+
+export interface DjotRawInlineNode extends DjotBaseNode {
+  format: string;
+  tag: "raw_inline";
+  text: string;
+}
+
 export interface DjotLinkNode extends DjotParentNode {
   destination: string;
   tag: "link";
@@ -229,6 +241,8 @@ export type DjotNode =
   | DjotDisplayMathNode
   | DjotCodeNode
   | DjotCodeBlockNode
+  | DjotRawBlockNode
+  | DjotRawInlineNode
   | DjotLinkNode
   | DjotImageNode
   | DjotBulletListNode
@@ -336,6 +350,16 @@ export interface DjotComponentPropsMap {
   code_block: React.HTMLAttributes<HTMLPreElement> &
     DjotNodePropsBase<"code_block"> & {
       language?: string;
+      value: string;
+    };
+  raw_block: React.HTMLAttributes<HTMLElement> &
+    DjotNodePropsBase<"raw_block"> & {
+      format: string;
+      value: string;
+    };
+  raw_inline: React.HTMLAttributes<HTMLElement> &
+    DjotNodePropsBase<"raw_inline"> & {
+      format: string;
       value: string;
     };
   link: React.AnchorHTMLAttributes<HTMLAnchorElement> & DjotNodePropsBase<"link">;

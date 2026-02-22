@@ -428,6 +428,63 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe('<pre><code class="language-ts">const x = 1;</code></pre>');
   });
 
+  it("renders raw_block html as react nodes", () => {
+    const node: DjotNode = {
+      tag: "raw_block",
+      format: "html",
+      text: `<video width="320" height="240" controls>
+  <source src="movie.mp4" type="video/mp4">
+  <source src="movie.ogg" type="video/ogg">
+  Your browser does not support the video tag.
+</video>
+`
+    };
+
+    const html = toHtml(node);
+    expect(html).toContain('<video width="320" height="240" controls="">');
+    expect(html).toContain('<source src="movie.mp4" type="video/mp4"/>');
+    expect(html).toContain('<source src="movie.ogg" type="video/ogg"/>');
+    expect(html).toContain("Your browser does not support the video tag.");
+    expect(html).toContain("</video>");
+  });
+
+  it("drops raw_block output for non-html format by default", () => {
+    const node: DjotNode = {
+      tag: "raw_block",
+      format: "latex",
+      text: "\\begin{equation}x=1\\end{equation}"
+    };
+
+    expect(toHtml(node)).toBe("");
+  });
+
+  it("renders raw_inline html as react nodes", () => {
+    const node: DjotNode = {
+      tag: "para",
+      children: [
+        { tag: "str", text: "Before " },
+        { tag: "raw_inline", format: "html", text: "<span>ok</span>" },
+        { tag: "str", text: " after" }
+      ]
+    };
+
+    expect(toHtml(node)).toBe("<p>Before <span>ok</span> after</p>");
+  });
+
+  it("uses raw_block override when provided", () => {
+    const node: DjotNode = {
+      tag: "raw_block",
+      format: "latex",
+      text: "\\alpha"
+    };
+
+    const components: DjotComponents = {
+      raw_block: ({ format, value }) => <pre data-format={format}>{value}</pre>
+    };
+
+    expect(toHtml(node, components)).toBe('<pre data-format="latex">\\alpha</pre>');
+  });
+
   it("renders link", () => {
     const node: DjotNode = {
       tag: "link",

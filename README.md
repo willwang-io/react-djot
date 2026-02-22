@@ -41,7 +41,7 @@ export function Example() {
 ### `<Djot />`
 
 ```tsx
-import { Djot } from "react-djot";
+import { Djot, compileDjot } from "react-djot";
 
 <Djot
   children={"# Title"}
@@ -51,14 +51,21 @@ import { Djot } from "react-djot";
     }
   }
 />;
+
+const ast = compileDjot("# Precompiled");
+<Djot ast={ast} />;
 ```
 
 Props:
 
 - `children?: string | null | undefined`
   - Djot source text to parse and render.
+- `ast?: DjotNode`
+  - Precompiled Djot AST to render directly (bypasses parsing).
 - `components?: DjotComponents`
   - Optional map of node-tag keys to React components.
+
+`children` and `ast` are mutually exclusive. Use one or the other.
 
 ### `components` overrides
 
@@ -124,6 +131,8 @@ export function Example() {
 - `code`
 - `verbatim`
 - `code_block`
+- `raw_block`
+- `raw_inline`
 - `link`
 - `image`
 - `bullet_list`
@@ -140,6 +149,16 @@ export function Example() {
 - Parses Djot via `@djot/djot` `parse()`
 - Walks the AST recursively and creates React elements directly
 - Does not use `dangerouslySetInnerHTML`
+
+## Raw HTML
+
+Djot raw blocks and raw inlines are supported:
+
+- Block: `~~~=html ... ~~~`
+- Inline: `` `...`{=html} ``
+
+Only `html` format is rendered by default. Other formats are ignored unless you
+provide a `components.raw_block` or `components.raw_inline` override.
 
 ## React Server Components
 
