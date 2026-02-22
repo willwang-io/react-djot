@@ -145,6 +145,7 @@ export function Example() {
 - `blockquote` and `block_quote`
 - `thematic_break`
 - `str`
+- `non_breaking_space`
 - `soft_break` and `softbreak`
 - `hard_break` and `hardbreak`
 
@@ -175,6 +176,11 @@ Autolink nodes are supported:
 
 Djot symbols (`:alias:`) render literally by default. You can provide a
 `components.symb` override to map aliases to emojis or any custom output.
+
+## Non-breaking Spaces
+
+An escaped space (`\ `) is parsed as `non_breaking_space` and renders as a
+non-breaking space character.
 
 ## React Server Components
 

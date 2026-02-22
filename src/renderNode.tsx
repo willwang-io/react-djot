@@ -25,6 +25,7 @@ import type {
   DjotInsertNode,
   DjotLinkNode,
   DjotMarkNode,
+  DjotNonBreakingSpaceNode,
   DjotNode,
   DjotOrderedListNode,
   DjotParentNode,
@@ -205,6 +206,9 @@ function toAltText(nodes: DjotNode[]): string {
       case "url":
       case "email":
         output += node.tag === "symb" ? `:${node.alias}:` : node.text;
+        break;
+      case "non_breaking_space":
+        output += "\u00a0";
         break;
       case "smart_punctuation":
         output += toSmartPunctuation(node.type, node.text);
@@ -1487,6 +1491,35 @@ function renderStr(
   );
 }
 
+function renderNonBreakingSpace(
+  node: DjotNonBreakingSpaceNode,
+  components: DjotComponents | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const value = "\u00a0";
+  const Component = pickComponent(components, "non_breaking_space");
+
+  if (!Component) {
+    return value;
+  }
+
+  if (typeof Component === "string") {
+    return createElement(Component, withKey({}, key), value);
+  }
+
+  return createElement(
+    Component,
+    withKey(
+      {
+        node,
+        value
+      },
+      key
+    ),
+    value
+  );
+}
+
 function renderSoftBreak(
   node: DjotSoftBreakNode,
   components: DjotComponents | undefined,
@@ -1712,6 +1745,8 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       );
     case "str":
       return renderStr(node, components, key);
+    case "non_breaking_space":
+      return renderNonBreakingSpace(node, components, key);
     default:
       if (isSoftBreakNode(node)) {
         return renderSoftBreak(node, components, key);

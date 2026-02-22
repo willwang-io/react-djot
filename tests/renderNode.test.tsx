@@ -649,6 +649,14 @@ describe("renderNode", () => {
     expect(renderToStaticMarkup(<div>{renderNode(node)}</div>)).toBe("<div>text</div>");
   });
 
+  it("renders non_breaking_space", () => {
+    const node: DjotNode = {
+      tag: "non_breaking_space"
+    };
+
+    expect(renderToStaticMarkup(<div>{renderNode(node)}</div>)).toBe("<div>\u00a0</div>");
+  });
+
   it("renders softbreak and soft_break", () => {
     const softBreakNode: DjotNode = { tag: "softbreak" };
     const softBreakUnderscoreNode: DjotNode = { tag: "soft_break" };
@@ -680,6 +688,20 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node, components)).toBe('<div data-node="para">custom</div>');
+  });
+
+  it("uses non_breaking_space override", () => {
+    const node: DjotNode = {
+      tag: "non_breaking_space"
+    };
+
+    const components: DjotComponents = {
+      non_breaking_space: () => <span data-kind="nbsp">NBSP</span>
+    };
+
+    expect(renderToStaticMarkup(<div>{renderNode(node, { components })}</div>)).toBe(
+      '<div><span data-kind="nbsp">NBSP</span></div>'
+    );
   });
 
   it("uses div override", () => {

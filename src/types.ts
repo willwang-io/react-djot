@@ -232,6 +232,10 @@ export interface DjotHardBreakNode extends DjotBaseNode {
   tag: "hard_break" | "hardbreak";
 }
 
+export interface DjotNonBreakingSpaceNode extends DjotBaseNode {
+  tag: "non_breaking_space";
+}
+
 export type DjotNode =
   | DjotDocNode
   | DjotSectionNode
@@ -276,6 +280,7 @@ export type DjotNode =
   | DjotThematicBreakNode
   | DjotStrNode
   | DjotVerbatimNode
+  | DjotNonBreakingSpaceNode
   | DjotSoftBreakNode
   | DjotHardBreakNode;
 
@@ -419,6 +424,9 @@ export interface DjotComponentPropsMap {
     };
   thematic_break: React.HTMLAttributes<HTMLHRElement> & DjotNodePropsBase<"thematic_break">;
   str: DjotNodePropsBase<"str"> & {
+    value: string;
+  };
+  non_breaking_space: DjotNodePropsBase<"non_breaking_space"> & {
     value: string;
   };
   soft_break: DjotNodePropsBase<"soft_break">;

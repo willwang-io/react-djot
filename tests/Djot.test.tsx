@@ -52,6 +52,11 @@ describe("Djot", () => {
     expect(html).toBe("<p>:smile:</p>");
   });
 
+  it("renders escaped space as non-breaking space", () => {
+    const html = renderToStaticMarkup(<Djot>{"A\\ B"}</Djot>);
+    expect(html).toBe("<p>A\u00a0B</p>");
+  });
+
 });
 
 describe("compileDjot", () => {
