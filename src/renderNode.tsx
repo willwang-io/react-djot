@@ -29,6 +29,8 @@ import type {
   DjotNode,
   DjotOrderedListNode,
   DjotParentNode,
+  DjotTaskListItemNode,
+  DjotTaskListNode,
   DjotRawBlockNode,
   DjotRawInlineNode,
   DjotRowNode,
@@ -52,6 +54,7 @@ export interface RenderNodeOptions {
   components?: DjotComponents | undefined;
   footnoteState?: FootnoteState | undefined;
   key?: React.Key;
+  taskListTight?: boolean | undefined;
 }
 
 type ComponentKey = keyof DjotComponentPropsMap;
@@ -92,13 +95,15 @@ function pickComponent(
 function renderChildren(
   children: DjotNode[],
   components?: DjotComponents,
-  footnoteState?: FootnoteState
+  footnoteState?: FootnoteState,
+  taskListTight?: boolean
 ): React.ReactNode[] {
   return children.map((child, index) =>
     renderNode(child, {
       components,
       footnoteState,
-      key: index
+      key: index,
+      taskListTight
     })
   );
 }
@@ -1441,6 +1446,63 @@ function renderOrderedList(
   );
 }
 
+function renderTaskList(
+  node: DjotTaskListNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const tight = node.tight ?? false;
+  const children = renderChildren(node.children, components, footnoteState, tight);
+  return renderWithOverride(
+    pickComponent(components, "task_list"),
+    "ul",
+    { className: "task-list" },
+    { node, tight },
+    key,
+    children
+  );
+}
+
+function renderTaskListItem(
+  node: DjotTaskListItemNode,
+  components: DjotComponents | undefined,
+  footnoteState: FootnoteState | undefined,
+  taskListTight: boolean | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const override = pickComponent(components, "task_list_item");
+
+  if (override) {
+    const contentChildren = renderChildren(node.children, components, footnoteState);
+    if (typeof override === "string") {
+      return createElement(override, withKey({}, key), contentChildren);
+    }
+    return createElement(
+      override,
+      withKey({ node, checkbox: node.checkbox, tight: taskListTight }, key),
+      contentChildren
+    );
+  }
+
+  // In tight task lists, paragraph wrappers are suppressed to keep text inline
+  // with the checkbox. Loose task lists preserve paragraph wrappers.
+  const firstChild = node.children[0];
+  const inlineSource =
+    taskListTight === true && node.children.length === 1 && firstChild?.tag === "para"
+      ? (firstChild as DjotParentNode).children
+      : node.children;
+  const contentChildren = renderChildren(inlineSource, components, footnoteState);
+
+  const checkboxEl = createElement("input", {
+    key: "checkbox",
+    type: "checkbox",
+    disabled: true,
+    checked: node.checkbox === "checked"
+  });
+  return createElement("li", withKey({}, key), [checkboxEl, contentChildren]);
+}
+
 function renderBlockQuote(
   node: DjotBlockquoteNode | DjotBlockQuoteNode,
   components: DjotComponents | undefined,
@@ -1564,8 +1626,10 @@ function renderHardBreak(
 }
 
 export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): React.ReactNode {
-  const { components, footnoteState, key } = options;
-  const children = isParentNode(node) ? renderChildren(node.children, components, footnoteState) : undefined;
+  const { components, footnoteState, key, taskListTight } = options;
+  const children = isParentNode(node)
+    ? renderChildren(node.children, components, footnoteState, taskListTight)
+    : undefined;
 
   switch (node.tag) {
     case "doc":
@@ -1729,6 +1793,10 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
         key,
         children
       );
+    case "task_list":
+      return renderTaskList(node, components, footnoteState, key);
+    case "task_list_item":
+      return renderTaskListItem(node, components, footnoteState, taskListTight, key);
     case "blockquote":
       return renderBlockQuote(node, components, footnoteState, key, "blockquote", "block_quote");
     case "block_quote":

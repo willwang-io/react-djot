@@ -142,6 +142,8 @@ export function Example() {
 - `bullet_list`
 - `ordered_list`
 - `list_item`
+- `task_list`
+- `task_list_item`
 - `blockquote` and `block_quote`
 - `thematic_break`
 - `str`
@@ -176,6 +178,51 @@ Autolink nodes are supported:
 
 Djot symbols (`:alias:`) render literally by default. You can provide a
 `components.symb` override to map aliases to emojis or any custom output.
+
+## Task Lists
+
+A bullet list item starting with `[ ]` (unchecked) or `[x]`/`[X]` (checked)
+is a task list item:
+
+```djot
+- [ ] unchecked item
+- [x] checked item
+```
+
+By default, task list items render as `<li>` elements with a disabled
+`<input type="checkbox">` prepended to the content. Use the `task_list` and
+`task_list_item` override keys to customise this rendering:
+
+```tsx
+const components: DjotComponents = {
+  task_list_item: ({ checkbox, children }) => (
+    <li data-checked={checkbox === "checked"}>{children}</li>
+  )
+};
+```
+
+Tight task lists (no blank lines between items) render item text inline with
+the checkbox. Loose task lists preserve paragraph wrappers (`<p>...</p>`)
+inside each item.
+
+Styling note: browsers apply default list markers to `<ul>/<li>`. To match
+Djot playground output (checkboxes without bullet dots), reset task-list
+styles in your app CSS:
+
+```css
+.task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.task-list li {
+  list-style: none;
+}
+
+.task-list input[type="checkbox"] {
+  margin-right: 0.45rem;
+}
+```
 
 ## Non-breaking Spaces
 

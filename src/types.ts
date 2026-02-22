@@ -202,6 +202,18 @@ export interface DjotListItemNode extends DjotParentNode {
   tag: "list_item";
 }
 
+export type DjotCheckboxStatus = "checked" | "unchecked";
+
+export interface DjotTaskListNode extends DjotParentNode {
+  tag: "task_list";
+  tight?: boolean;
+}
+
+export interface DjotTaskListItemNode extends DjotParentNode {
+  checkbox: DjotCheckboxStatus;
+  tag: "task_list_item";
+}
+
 export interface DjotBlockquoteNode extends DjotParentNode {
   tag: "blockquote";
 }
@@ -275,6 +287,8 @@ export type DjotNode =
   | DjotBulletListNode
   | DjotOrderedListNode
   | DjotListItemNode
+  | DjotTaskListNode
+  | DjotTaskListItemNode
   | DjotBlockquoteNode
   | DjotBlockQuoteNode
   | DjotThematicBreakNode
@@ -414,6 +428,15 @@ export interface DjotComponentPropsMap {
   bullet_list: React.HTMLAttributes<HTMLUListElement> & DjotNodePropsBase<"bullet_list">;
   ordered_list: React.OlHTMLAttributes<HTMLOListElement> & DjotNodePropsBase<"ordered_list">;
   list_item: React.LiHTMLAttributes<HTMLLIElement> & DjotNodePropsBase<"list_item">;
+  task_list: React.HTMLAttributes<HTMLUListElement> &
+    DjotNodePropsBase<"task_list"> & {
+      tight?: boolean;
+    };
+  task_list_item: React.LiHTMLAttributes<HTMLLIElement> &
+    DjotNodePropsBase<"task_list_item"> & {
+      checkbox: DjotCheckboxStatus;
+      tight?: boolean;
+    };
   blockquote: React.BlockquoteHTMLAttributes<HTMLQuoteElement> &
     Omit<DjotNodePropsBase<"blockquote">, "node"> & {
       node: DjotBlockquoteNode | DjotBlockQuoteNode;

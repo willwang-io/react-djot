@@ -614,6 +614,83 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe("<li>item</li>");
   });
 
+  it("renders task_list with unchecked items", () => {
+    const node: DjotNode = {
+      tag: "task_list",
+      tight: true,
+      children: [
+        {
+          tag: "task_list_item",
+          checkbox: "unchecked",
+          children: [{ tag: "para", children: [{ tag: "str", text: "todo" }] }]
+        }
+      ]
+    };
+    expect(toHtml(node)).toBe('<ul class="task-list"><li><input type="checkbox" disabled=""/>todo</li></ul>');
+  });
+
+  it("renders task_list_item unchecked", () => {
+    const node: DjotNode = {
+      tag: "task_list_item",
+      checkbox: "unchecked",
+      children: [{ tag: "str", text: "buy milk" }]
+    };
+    expect(toHtml(node)).toBe('<li><input type="checkbox" disabled=""/>buy milk</li>');
+  });
+
+  it("renders task_list_item checked", () => {
+    const node: DjotNode = {
+      tag: "task_list_item",
+      checkbox: "checked",
+      children: [{ tag: "str", text: "done" }]
+    };
+    expect(toHtml(node)).toBe('<li><input type="checkbox" disabled="" checked=""/>done</li>');
+  });
+
+  it("unwraps single para child in tight task_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "task_list",
+      tight: true,
+      children: [
+        {
+          tag: "task_list_item",
+          checkbox: "unchecked",
+          children: [{ tag: "para", children: [{ tag: "str", text: "buy milk" }] }]
+        }
+      ]
+    };
+    expect(toHtml(node)).toBe('<ul class="task-list"><li><input type="checkbox" disabled=""/>buy milk</li></ul>');
+  });
+
+  it("keeps para wrapper in loose task_list default rendering", () => {
+    const node: DjotNode = {
+      tag: "task_list",
+      tight: false,
+      children: [
+        {
+          tag: "task_list_item",
+          checkbox: "unchecked",
+          children: [{ tag: "para", children: [{ tag: "str", text: "buy milk" }] }]
+        }
+      ]
+    };
+    expect(toHtml(node)).toBe('<ul class="task-list"><li><input type="checkbox" disabled=""/><p>buy milk</p></li></ul>');
+  });
+
+  it("uses task_list_item override", () => {
+    const node: DjotNode = {
+      tag: "task_list_item",
+      checkbox: "checked",
+      children: [{ tag: "str", text: "done" }]
+    };
+    const components: DjotComponents = {
+      task_list_item: ({ checkbox, children }) => (
+        <li data-checked={checkbox === "checked"}>{children}</li>
+      )
+    };
+    expect(toHtml(node, components)).toBe('<li data-checked="true">done</li>');
+  });
+
   it("renders blockquote", () => {
     const node: DjotNode = {
       tag: "blockquote",

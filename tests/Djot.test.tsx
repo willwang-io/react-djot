@@ -52,6 +52,17 @@ describe("Djot", () => {
     expect(html).toBe("<p>:smile:</p>");
   });
 
+  it("preserves paragraph wrappers for loose task lists", () => {
+    const source = `- [ ] one
+
+- [ ] two`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe(
+      '<ul class="task-list"><li><input type="checkbox" disabled=""/><p>one</p></li><li><input type="checkbox" disabled=""/><p>two</p></li></ul>'
+    );
+  });
+
   it("renders escaped space as non-breaking space", () => {
     const html = renderToStaticMarkup(<Djot>{"A\\ B"}</Djot>);
     expect(html).toBe("<p>A\u00a0B</p>");
