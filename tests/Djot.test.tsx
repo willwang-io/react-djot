@@ -46,6 +46,12 @@ describe("Djot", () => {
       '<p><a href="https://pandoc.org/lua-filters">https://pandoc.org/lua-filters</a>\n<a href="mailto:me@example.com">me@example.com</a></p>'
     );
   });
+
+  it("renders symbol aliases literally by default", () => {
+    const html = renderToStaticMarkup(<Djot>{":smile:"}</Djot>);
+    expect(html).toBe("<p>:smile:</p>");
+  });
+
 });
 
 describe("compileDjot", () => {

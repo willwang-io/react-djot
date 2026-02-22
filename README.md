@@ -127,6 +127,7 @@ export function Example() {
 - `double_quoted`
 - `single_quoted`
 - `smart_punctuation`
+- `symb`
 - `inline_math`
 - `display_math`
 - `code`
@@ -169,6 +170,11 @@ Autolink nodes are supported:
 
 - `<https://pandoc.org/lua-filters>` -> `<a href="https://pandoc.org/lua-filters">...`
 - `<me@example.com>` -> `<a href="mailto:me@example.com">...`
+
+## Symbols
+
+Djot symbols (`:alias:`) render literally by default. You can provide a
+`components.symb` override to map aliases to emojis or any custom output.
 
 ## React Server Components
 

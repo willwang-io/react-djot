@@ -38,6 +38,7 @@ import type {
   DjotSingleQuotedNode,
   DjotStrNode,
   DjotSubscriptNode,
+  DjotSymbNode,
   DjotSuperscriptNode,
   DjotSupeNode,
   DjotTableAlignment,
@@ -200,9 +201,10 @@ function toAltText(nodes: DjotNode[]): string {
       case "code_block":
       case "raw_block":
       case "raw_inline":
+      case "symb":
       case "url":
       case "email":
-        output += node.text;
+        output += node.tag === "symb" ? `:${node.alias}:` : node.text;
         break;
       case "smart_punctuation":
         output += toSmartPunctuation(node.type, node.text);
@@ -1337,6 +1339,38 @@ function renderEmail(
   );
 }
 
+function renderSymb(
+  node: DjotSymbNode,
+  components: DjotComponents | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const alias = node.alias;
+  const value = `:${alias}:`;
+  const Component = pickComponent(components, "symb");
+
+  if (!Component) {
+    return value;
+  }
+
+  if (typeof Component === "string") {
+    return createElement(Component, withKey(toDomPropsFromAttributes(node.attributes), key), value);
+  }
+
+  return createElement(
+    Component,
+    withKey(
+      {
+        ...toDomPropsFromAttributes(node.attributes),
+        alias,
+        node,
+        value
+      },
+      key
+    ),
+    value
+  );
+}
+
 function renderLink(
   node: DjotLinkNode,
   components: DjotComponents | undefined,
@@ -1614,6 +1648,8 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       );
     case "smart_punctuation":
       return renderSmartPunctuation(node, components, key);
+    case "symb":
+      return renderSymb(node, components, key);
     case "inline_math":
       return renderInlineMath(node, components, key);
     case "display_math":

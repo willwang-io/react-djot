@@ -164,6 +164,11 @@ export interface DjotRawInlineNode extends DjotBaseNode {
   text: string;
 }
 
+export interface DjotSymbNode extends DjotBaseNode {
+  alias: string;
+  tag: "symb";
+}
+
 export interface DjotUrlNode extends DjotBaseNode {
   tag: "url";
   text: string;
@@ -258,6 +263,7 @@ export type DjotNode =
   | DjotCodeBlockNode
   | DjotRawBlockNode
   | DjotRawInlineNode
+  | DjotSymbNode
   | DjotUrlNode
   | DjotEmailNode
   | DjotLinkNode
@@ -378,6 +384,11 @@ export interface DjotComponentPropsMap {
   raw_inline: React.HTMLAttributes<HTMLElement> &
     DjotNodePropsBase<"raw_inline"> & {
       format: string;
+      value: string;
+    };
+  symb: React.HTMLAttributes<HTMLElement> &
+    DjotNodePropsBase<"symb"> & {
+      alias: string;
       value: string;
     };
   url: React.AnchorHTMLAttributes<HTMLAnchorElement> &

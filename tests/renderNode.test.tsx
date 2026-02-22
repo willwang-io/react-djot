@@ -508,6 +508,28 @@ describe("renderNode", () => {
     expect(toHtml(node, components)).toBe('<em data-kind="span">custom</em>');
   });
 
+  it("renders symb literally by default", () => {
+    const node: DjotNode = {
+      tag: "symb",
+      alias: "smile"
+    };
+
+    expect(toHtml(node)).toBe(":smile:");
+  });
+
+  it("uses symb override", () => {
+    const node: DjotNode = {
+      tag: "symb",
+      alias: "smile"
+    };
+
+    const components: DjotComponents = {
+      symb: ({ alias }) => <span data-kind="symb">{alias === "smile" ? "😄" : `:${alias}:`}</span>
+    };
+
+    expect(toHtml(node, components)).toBe('<span data-kind="symb">😄</span>');
+  });
+
   it("renders url autolink", () => {
     const node: DjotNode = {
       tag: "url",
