@@ -36,6 +36,16 @@ describe("Djot", () => {
     expect(html).toContain('<source src="movie.mp4" type="video/mp4"/>');
     expect(html).toContain("</video>");
   });
+
+  it("renders autolinks for url and email", () => {
+    const source = `<https://pandoc.org/lua-filters>
+<me@example.com>`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe(
+      '<p><a href="https://pandoc.org/lua-filters">https://pandoc.org/lua-filters</a>\n<a href="mailto:me@example.com">me@example.com</a></p>'
+    );
+  });
 });
 
 describe("compileDjot", () => {

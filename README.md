@@ -120,6 +120,7 @@ export function Example() {
 - `subscript`
 - `insert`
 - `delete`
+- `span`
 - `footnote_reference`
 - `footnote`
 - `endnotes`
@@ -133,6 +134,8 @@ export function Example() {
 - `code_block`
 - `raw_block`
 - `raw_inline`
+- `url`
+- `email`
 - `link`
 - `image`
 - `bullet_list`
@@ -159,6 +162,13 @@ Djot raw blocks and raw inlines are supported:
 
 Only `html` format is rendered by default. Other formats are ignored unless you
 provide a `components.raw_block` or `components.raw_inline` override.
+
+## Autolinks
+
+Autolink nodes are supported:
+
+- `<https://pandoc.org/lua-filters>` -> `<a href="https://pandoc.org/lua-filters">...`
+- `<me@example.com>` -> `<a href="mailto:me@example.com">...`
 
 ## React Server Components
 

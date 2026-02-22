@@ -400,6 +400,16 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe("<p>My boss is <del>mean</del><ins>nice</ins>.</p>");
   });
 
+  it("renders span with attributes", () => {
+    const node: DjotNode = {
+      tag: "span",
+      attributes: { class: "note", id: "greeting" },
+      children: [{ tag: "str", text: "hello" }]
+    };
+
+    expect(toHtml(node)).toBe('<span class="note" id="greeting">hello</span>');
+  });
+
   it("renders code", () => {
     const node: DjotNode = {
       tag: "code",
@@ -483,6 +493,52 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node, components)).toBe('<pre data-format="latex">\\alpha</pre>');
+  });
+
+  it("uses span override", () => {
+    const node: DjotNode = {
+      tag: "span",
+      children: [{ tag: "str", text: "custom" }]
+    };
+
+    const components: DjotComponents = {
+      span: ({ children }) => <em data-kind="span">{children}</em>
+    };
+
+    expect(toHtml(node, components)).toBe('<em data-kind="span">custom</em>');
+  });
+
+  it("renders url autolink", () => {
+    const node: DjotNode = {
+      tag: "url",
+      text: "https://pandoc.org/lua-filters"
+    };
+
+    expect(toHtml(node)).toBe(
+      '<a href="https://pandoc.org/lua-filters">https://pandoc.org/lua-filters</a>'
+    );
+  });
+
+  it("renders email autolink", () => {
+    const node: DjotNode = {
+      tag: "email",
+      text: "me@example.com"
+    };
+
+    expect(toHtml(node)).toBe('<a href="mailto:me@example.com">me@example.com</a>');
+  });
+
+  it("uses url override", () => {
+    const node: DjotNode = {
+      tag: "url",
+      text: "https://example.com"
+    };
+
+    const components: DjotComponents = {
+      url: ({ children }) => <span data-kind="url">{children}</span>
+    };
+
+    expect(toHtml(node, components)).toBe('<span data-kind="url">https://example.com</span>');
   });
 
   it("renders link", () => {

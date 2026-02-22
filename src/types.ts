@@ -72,6 +72,10 @@ export interface DjotDeleteNode extends DjotParentNode {
   tag: "delete";
 }
 
+export interface DjotSpanNode extends DjotParentNode {
+  tag: "span";
+}
+
 export type DjotTableAlignment = "default" | "left" | "right" | "center" | (string & {});
 
 export interface DjotTableNode extends DjotParentNode {
@@ -160,6 +164,16 @@ export interface DjotRawInlineNode extends DjotBaseNode {
   text: string;
 }
 
+export interface DjotUrlNode extends DjotBaseNode {
+  tag: "url";
+  text: string;
+}
+
+export interface DjotEmailNode extends DjotBaseNode {
+  tag: "email";
+  text: string;
+}
+
 export interface DjotLinkNode extends DjotParentNode {
   destination: string;
   tag: "link";
@@ -228,6 +242,7 @@ export type DjotNode =
   | DjotSubscriptNode
   | DjotInsertNode
   | DjotDeleteNode
+  | DjotSpanNode
   | DjotTableNode
   | DjotCaptionNode
   | DjotRowNode
@@ -243,6 +258,8 @@ export type DjotNode =
   | DjotCodeBlockNode
   | DjotRawBlockNode
   | DjotRawInlineNode
+  | DjotUrlNode
+  | DjotEmailNode
   | DjotLinkNode
   | DjotImageNode
   | DjotBulletListNode
@@ -295,6 +312,7 @@ export interface DjotComponentPropsMap {
   subscript: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"subscript">;
   insert: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"insert">;
   delete: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"delete">;
+  span: React.HTMLAttributes<HTMLElement> & DjotNodePropsBase<"span">;
   table: React.TableHTMLAttributes<HTMLTableElement> & DjotNodePropsBase<"table">;
   caption: React.HTMLAttributes<HTMLTableCaptionElement> & DjotNodePropsBase<"caption">;
   row: React.HTMLAttributes<HTMLTableRowElement> &
@@ -360,6 +378,16 @@ export interface DjotComponentPropsMap {
   raw_inline: React.HTMLAttributes<HTMLElement> &
     DjotNodePropsBase<"raw_inline"> & {
       format: string;
+      value: string;
+    };
+  url: React.AnchorHTMLAttributes<HTMLAnchorElement> &
+    DjotNodePropsBase<"url"> & {
+      href: string;
+      value: string;
+    };
+  email: React.AnchorHTMLAttributes<HTMLAnchorElement> &
+    DjotNodePropsBase<"email"> & {
+      href: string;
       value: string;
     };
   link: React.AnchorHTMLAttributes<HTMLAnchorElement> & DjotNodePropsBase<"link">;

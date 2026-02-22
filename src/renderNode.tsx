@@ -15,6 +15,7 @@ import type {
   DjotDoubleQuotedNode,
   DjotDisplayMathNode,
   DjotDocNode,
+  DjotEmailNode,
   DjotFootnoteReferenceNode,
   DjotHardBreakNode,
   DjotHeadingNode,
@@ -41,6 +42,7 @@ import type {
   DjotSupeNode,
   DjotTableAlignment,
   DjotTableNode,
+  DjotUrlNode,
   DjotVerbatimNode
 } from "./types";
 
@@ -198,6 +200,8 @@ function toAltText(nodes: DjotNode[]): string {
       case "code_block":
       case "raw_block":
       case "raw_inline":
+      case "url":
+      case "email":
         output += node.text;
         break;
       case "smart_punctuation":
@@ -1285,6 +1289,54 @@ function renderRawInline(
   );
 }
 
+function renderUrl(
+  node: DjotUrlNode,
+  components: DjotComponents | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const value = node.text;
+  const href = value;
+  return renderWithOverride(
+    pickComponent(components, "url"),
+    "a",
+    {
+      ...toDomPropsFromAttributes(node.attributes),
+      href
+    },
+    {
+      href,
+      node,
+      value
+    },
+    key,
+    value
+  );
+}
+
+function renderEmail(
+  node: DjotEmailNode,
+  components: DjotComponents | undefined,
+  key?: React.Key
+): React.ReactNode {
+  const value = node.text;
+  const href = `mailto:${value}`;
+  return renderWithOverride(
+    pickComponent(components, "email"),
+    "a",
+    {
+      ...toDomPropsFromAttributes(node.attributes),
+      href
+    },
+    {
+      href,
+      node,
+      value
+    },
+    key,
+    value
+  );
+}
+
 function renderLink(
   node: DjotLinkNode,
   components: DjotComponents | undefined,
@@ -1512,6 +1564,17 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderInsert(node, components, footnoteState, key);
     case "delete":
       return renderDelete(node, components, footnoteState, key);
+    case "span":
+      return renderWithOverride(
+        pickComponent(components, "span"),
+        "span",
+        toDomPropsFromAttributes(node.attributes),
+        {
+          node
+        },
+        key,
+        children
+      );
     case "footnote_reference":
       return renderFootnoteReference(node, components, footnoteState, key);
     case "footnote":
@@ -1565,6 +1628,10 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderRawBlock(node, components, key);
     case "raw_inline":
       return renderRawInline(node, components, key);
+    case "url":
+      return renderUrl(node, components, key);
+    case "email":
+      return renderEmail(node, components, key);
     case "link":
       return renderLink(node, components, footnoteState, key);
     case "image":
