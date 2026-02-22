@@ -1,0 +1,258 @@
+:root {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #132530;
+  background: radial-gradient(circle at top right, #cfe7f6, #f7fbff 55%, #ffffff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.githubCorner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  color: #fff;
+}
+
+.githubCorner svg {
+  fill: #151513;
+  color: #fff;
+  width: 80px;
+  height: 80px;
+}
+
+.githubCorner .octo-arm {
+  transform-origin: 130px 106px;
+}
+
+.githubCorner:hover .octo-arm {
+  animation: octocat-wave 560ms ease-in-out;
+}
+
+@keyframes octocat-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20%,
+  60% {
+    transform: rotate(-25deg);
+  }
+  40%,
+  80% {
+    transform: rotate(10deg);
+  }
+}
+
+@media (max-width: 500px) {
+  .githubCorner:hover .octo-arm {
+    animation: none;
+  }
+
+  .githubCorner .octo-arm {
+    animation: octocat-wave 560ms ease-in-out;
+  }
+}
+
+.page {
+  margin: 0 auto;
+  max-width: 920px;
+  min-height: 100vh;
+  padding: 3rem 1.2rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.subtitle {
+  margin: 0.65rem 0 1.8rem;
+  color: #37505e;
+}
+
+.card {
+  border: 1px solid #d7e5ef;
+  border-radius: 14px;
+  background: #ffffffeb;
+  padding: 1rem;
+  box-shadow: 0 8px 24px -20px #34607c;
+}
+
+.demoStack {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.demoHeader {
+  margin-bottom: 0.75rem;
+}
+
+.demoTitle {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.demoDescription {
+  margin: 0.35rem 0 0;
+  color: #37505e;
+  font-size: 0.95rem;
+}
+
+.sourceDetails {
+  margin-top: 0.75rem;
+}
+
+.sourceDetails > summary {
+  cursor: pointer;
+  color: #2c5a77;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.sourcePane {
+  margin: 0;
+  overflow: auto;
+  border-radius: 10px;
+  background: #14212e;
+  color: #f0f7fc;
+  padding: 0.9rem 1rem;
+  line-height: 1.45;
+  font-family: "SF Mono", "Menlo", monospace;
+}
+
+.sourcePane.compact {
+  margin-top: 0.55rem;
+  max-height: 22rem;
+}
+
+.renderPane {
+  border: 1px solid #d7e5ef;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.9rem 1rem;
+}
+
+.heading {
+  margin-top: 1.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.mark {
+  background: #ffe38a;
+  border-radius: 0.2rem;
+  padding: 0 0.2rem;
+}
+
+.quote {
+  margin: 1rem 0;
+  border-left: 3px solid #5f7c90;
+  padding-left: 0.8rem;
+  color: #37505e;
+}
+
+.warning {
+  margin: 1rem 0;
+  border: 1px solid #e5b66a;
+  border-left-width: 6px;
+  border-radius: 8px;
+  background: #fff9ef;
+  padding: 0.75rem 0.9rem;
+}
+
+.card table {
+  margin: 0.8rem 0 1rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.card th,
+.card td {
+  border: 1px solid #d7e5ef;
+  padding: 0.45rem 0.6rem;
+}
+
+.card th {
+  background: #f4f9fc;
+  font-weight: 600;
+  text-align: left;
+}
+
+.card .task-list {
+  margin: 0.8rem 0 1rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.card .task-list li {
+  list-style: none;
+}
+
+.card .task-list input[type="checkbox"] {
+  margin-right: 0.45rem;
+}
+
+.pill {
+  display: inline-block;
+  border-radius: 999px;
+  background: #e8f2fa;
+  color: #15384f;
+  padding: 0 0.45rem;
+}
+
+.math.inline {
+  border-radius: 0.25rem;
+  background: #f1f7fc;
+  padding: 0.05rem 0.35rem;
+  font-family: "SF Mono", "Menlo", monospace;
+}
+
+.math.display {
+  display: block;
+  margin: 0.7rem 0;
+  border-radius: 0.4rem;
+  background: #f1f7fc;
+  padding: 0.5rem 0.75rem;
+  font-family: "SF Mono", "Menlo", monospace;
+}
+
+.renderPane mjx-container[display="true"] {
+  margin: 0.7rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.resources {
+  margin-top: 1rem;
+  border-top: 1px solid #d7e5ef;
+  padding-top: 0.8rem;
+}
+
+.resourcesTitle {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.resourcesList {
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+}
+
+.resourcesList li + li {
+  margin-top: 0.25rem;
+}
+
+.codeBlock {
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #132530;
+  color: #f2f7fb;
+  padding: 0.9rem 1rem;
+}
