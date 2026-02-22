@@ -26,6 +26,16 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe("<p>paragraph</p>");
   });
 
+  it("applies para attributes", () => {
+    const node: DjotNode = {
+      tag: "para",
+      attributes: { class: "lead", id: "p1" },
+      children: [{ tag: "str", text: "paragraph" }]
+    };
+
+    expect(toHtml(node)).toBe('<p class="lead" id="p1">paragraph</p>');
+  });
+
   it("renders section", () => {
     const node: DjotNode = {
       tag: "section",
@@ -178,6 +188,17 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node)).toBe("<h2>title</h2>");
+  });
+
+  it("applies heading attributes", () => {
+    const node: DjotNode = {
+      tag: "heading",
+      level: 2,
+      attributes: { class: "heading", id: "title" },
+      children: [{ tag: "str", text: "title" }]
+    };
+
+    expect(toHtml(node)).toBe('<h2 class="heading" id="title">title</h2>');
   });
 
   it("renders emph", () => {
@@ -377,6 +398,16 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node)).toBe('<span class="math inline">\\(e=mc^2\\)</span>');
+  });
+
+  it("merges inline_math class with node attributes", () => {
+    const node: DjotNode = {
+      tag: "inline_math",
+      text: "e=mc^2",
+      attributes: { class: "katex" }
+    };
+
+    expect(toHtml(node)).toBe('<span class="math inline katex">\\(e=mc^2\\)</span>');
   });
 
   it("renders display_math", () => {
@@ -611,6 +642,37 @@ describe("renderNode", () => {
     expect(toHtml(node)).toBe('<p><a href="https://example.com">example</a></p>');
   });
 
+  it("merges reference and node attributes for reference-style links", () => {
+    const node: DjotNode = {
+      tag: "doc",
+      references: {
+        bar: {
+          tag: "reference",
+          label: "bar",
+          destination: "https://example.com",
+          attributes: { class: "ref-link", target: "_blank" }
+        }
+      },
+      children: [
+        {
+          tag: "para",
+          children: [
+            {
+              tag: "link",
+              reference: "bar",
+              attributes: { class: "node-link", target: "_self" },
+              children: [{ tag: "str", text: "example" }]
+            }
+          ]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe(
+      '<p><a href="https://example.com" class="ref-link node-link" target="_self">example</a></p>'
+    );
+  });
+
   it("resolves reference-style link destination from doc autoReferences", () => {
     const node: DjotNode = {
       tag: "doc",
@@ -653,6 +715,25 @@ describe("renderNode", () => {
     };
 
     expect(toHtml(node)).toBe('<p><img alt="logo" src="/logo.png"/></p>');
+  });
+
+  it("merges task_list class with node attributes", () => {
+    const node: DjotNode = {
+      tag: "task_list",
+      tight: true,
+      attributes: { class: "todo" },
+      children: [
+        {
+          tag: "task_list_item",
+          checkbox: "unchecked",
+          children: [{ tag: "para", children: [{ tag: "str", text: "todo" }] }]
+        }
+      ]
+    };
+
+    expect(toHtml(node)).toBe(
+      '<ul class="task-list todo"><li><input type="checkbox" disabled=""/>todo</li></ul>'
+    );
   });
 
   it("renders bullet_list", () => {
@@ -943,6 +1024,16 @@ describe("renderNode", () => {
     };
 
     expect(renderToStaticMarkup(<div>{renderNode(node)}</div>)).toBe("<div>text</div>");
+  });
+
+  it("wraps str with span when attributes are present", () => {
+    const node: DjotNode = {
+      tag: "str",
+      text: "text",
+      attributes: { class: "token" }
+    };
+
+    expect(renderToStaticMarkup(<div>{renderNode(node)}</div>)).toBe('<div><span class="token">text</span></div>');
   });
 
   it("renders non_breaking_space", () => {

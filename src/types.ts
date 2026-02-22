@@ -3,6 +3,7 @@ import type React from "react";
 export type DjotAttributes = Record<string, string>;
 
 export interface DjotBaseNode {
+  autoAttributes?: DjotAttributes;
   attributes?: DjotAttributes;
   tag: string;
 }
@@ -19,7 +20,6 @@ export interface DjotDocNode extends DjotParentNode {
 }
 
 export interface DjotSectionNode extends DjotParentNode {
-  autoAttributes?: DjotAttributes;
   tag: "section";
 }
 

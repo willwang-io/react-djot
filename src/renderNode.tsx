@@ -160,14 +160,18 @@ function resolveReferenceDestination(
     return node.destination;
   }
 
+  return resolveReferenceNode(node, footnoteState)?.destination;
+}
+
+function resolveReferenceNode(
+  node: Pick<DjotLinkNode, "reference"> | Pick<DjotImageNode, "reference">,
+  footnoteState: FootnoteState | undefined
+): DjotReferenceNode | undefined {
   if (!node.reference || !footnoteState) {
     return undefined;
   }
 
-  return (
-    footnoteState.referencesByLabel[node.reference]?.destination ??
-    footnoteState.autoReferencesByLabel[node.reference]?.destination
-  );
+  return footnoteState.referencesByLabel[node.reference] ?? footnoteState.autoReferencesByLabel[node.reference];
 }
 
 function ensureFootnoteIndex(label: string, footnoteState: FootnoteState): number {
@@ -311,6 +315,54 @@ function toDomPropsFromAttributes(attributes: Record<string, string> | undefined
   }
 
   return props;
+}
+
+function toDomPropsFromNode(node: DjotBaseNode): Record<string, unknown> {
+  return {
+    ...toDomPropsFromAttributes(node.autoAttributes),
+    ...toDomPropsFromAttributes(node.attributes)
+  };
+}
+
+function joinClassNames(...values: Array<string | undefined>): string | undefined {
+  const classes = values.filter((value): value is string => Boolean(value && value.length > 0));
+  return classes.length > 0 ? classes.join(" ") : undefined;
+}
+
+function toStyleObject(value: unknown): React.CSSProperties | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+
+  return value as React.CSSProperties;
+}
+
+function mergeDomProps(node: DjotBaseNode, extra: Record<string, unknown> = {}): Record<string, unknown> {
+  const nodeProps = toDomPropsFromNode(node);
+  const merged: Record<string, unknown> = {
+    ...extra,
+    ...nodeProps
+  };
+
+  const className = joinClassNames(
+    typeof extra.className === "string" ? extra.className : undefined,
+    typeof nodeProps.className === "string" ? nodeProps.className : undefined
+  );
+
+  if (className) {
+    merged.className = className;
+  }
+
+  const extraStyle = toStyleObject(extra.style);
+  const nodeStyle = toStyleObject(nodeProps.style);
+  if (extraStyle || nodeStyle) {
+    merged.style = {
+      ...(extraStyle ?? {}),
+      ...(nodeStyle ?? {})
+    };
+  }
+
+  return merged;
 }
 
 function textAlignForCell(align: DjotTableAlignment): React.CSSProperties["textAlign"] | undefined {
@@ -688,11 +740,12 @@ function renderDoc(
   const Component = pickComponent(components, "doc");
 
   if (Component) {
+    const domProps = mergeDomProps(node);
     if (typeof Component === "string") {
-      return createElement(Component, withKey({}, key), allChildren);
+      return createElement(Component, withKey(domProps, key), allChildren);
     }
 
-    return createElement(Component, withKey({ node }, key), allChildren);
+    return createElement(Component, withKey({ ...domProps, node }, key), allChildren);
   }
 
   return createElement(Fragment, withKey({}, key), allChildren);
@@ -705,14 +758,10 @@ function renderSection(
   key?: React.Key
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
-  const domProps = {
-    ...toDomPropsFromAttributes(node.autoAttributes),
-    ...toDomPropsFromAttributes(node.attributes)
-  };
   return renderWithOverride(
     pickComponent(components, "section"),
     "section",
-    domProps,
+    mergeDomProps(node),
     {
       node
     },
@@ -731,7 +780,7 @@ function renderDiv(
   return renderWithOverride(
     pickComponent(components, "div"),
     "div",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -792,7 +841,7 @@ function renderTable(
   return renderWithOverride(
     pickComponent(components, "table"),
     "table",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -817,7 +866,7 @@ function renderCaption(
   return renderWithOverride(
     Component,
     "caption",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -836,7 +885,7 @@ function renderRow(
   return renderWithOverride(
     pickComponent(components, "row"),
     "tr",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       head: node.head,
       node
@@ -854,10 +903,9 @@ function renderCell(
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
   const textAlign = textAlignForCell(node.align);
-  const domProps = {
-    ...toDomPropsFromAttributes(node.attributes),
+  const domProps = mergeDomProps(node, {
     style: textAlign ? { textAlign } : undefined
-  };
+  });
 
   return renderWithOverride(
     pickComponent(components, "cell"),
@@ -884,7 +932,7 @@ function renderHeading(
   return renderWithOverride(
     pickComponent(components, "heading"),
     `h${level}`,
-    {},
+    mergeDomProps(node),
     {
       level,
       node
@@ -906,7 +954,7 @@ function renderMark(
   return renderWithOverride(
     pickComponent(components, primary, alias),
     "mark",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -927,7 +975,7 @@ function renderSuperscript(
   return renderWithOverride(
     pickComponent(components, primary, alias),
     "sup",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -946,7 +994,7 @@ function renderSubscript(
   return renderWithOverride(
     pickComponent(components, "subscript"),
     "sub",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -965,7 +1013,7 @@ function renderInsert(
   return renderWithOverride(
     pickComponent(components, "insert"),
     "ins",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -984,7 +1032,7 @@ function renderDelete(
   return renderWithOverride(
     pickComponent(components, "delete"),
     "del",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -1017,11 +1065,11 @@ function renderFootnoteReference(
   return renderWithOverride(
     pickComponent(components, "footnote_reference"),
     "a",
-    {
+    mergeDomProps(node, {
       href,
       id,
       role: "doc-noteref"
-    },
+    }),
     {
       index,
       label,
@@ -1064,10 +1112,10 @@ function renderEndnotes(
     return renderWithOverride(
       pickComponent(components, "footnote"),
       "li",
-      {
+      mergeDomProps(footnoteNode, {
         id: `fn${index}`,
         key: label
-      },
+      }),
       {
         index,
         label,
@@ -1107,19 +1155,21 @@ function renderQuoted(
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
   const Component = pickComponent(components, primary, alias);
+  const domProps = mergeDomProps(node);
 
   if (!Component) {
     return createElement(Fragment, withKey({}, key), openQuote, children, closeQuote);
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), openQuote, children, closeQuote);
+    return createElement(Component, withKey(domProps, key), openQuote, children, closeQuote);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         node
       },
       key
@@ -1137,19 +1187,21 @@ function renderSmartPunctuation(
 ): React.ReactNode {
   const value = toSmartPunctuation(node.type, node.text);
   const Component = pickComponent(components, "smart_punctuation");
+  const domProps = mergeDomProps(node);
 
   if (!Component) {
     return value;
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), value);
+    return createElement(Component, withKey(domProps, key), value);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         kind: node.type,
         node,
         value
@@ -1169,9 +1221,9 @@ function renderInlineMath(
   return renderWithOverride(
     pickComponent(components, "inline_math"),
     "span",
-    {
+    mergeDomProps(node, {
       className: "math inline"
-    },
+    }),
     {
       node,
       value
@@ -1190,9 +1242,9 @@ function renderDisplayMath(
   return renderWithOverride(
     pickComponent(components, "display_math"),
     "span",
-    {
+    mergeDomProps(node, {
       className: "math display"
-    },
+    }),
     {
       node,
       value
@@ -1213,7 +1265,7 @@ function renderCode(
   return renderWithOverride(
     pickComponent(components, primary, alias),
     "code",
-    {},
+    mergeDomProps(node),
     {
       node,
       value
@@ -1241,7 +1293,7 @@ function renderCodeBlock(
   return renderWithOverride(
     pickComponent(components, "code_block"),
     "pre",
-    {},
+    mergeDomProps(node),
     {
       language,
       node,
@@ -1261,6 +1313,7 @@ function renderRawBlock(
   const value = node.text;
   const htmlChildren = format === "html" ? rawHtmlChildren(value, `raw-block-${String(key ?? "node")}`) : undefined;
   const Component = pickComponent(components, "raw_block");
+  const domProps = mergeDomProps(node);
 
   if (!Component) {
     if (format !== "html") {
@@ -1271,13 +1324,14 @@ function renderRawBlock(
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), htmlChildren ?? value);
+    return createElement(Component, withKey(domProps, key), htmlChildren ?? value);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         format,
         node,
         value
@@ -1297,6 +1351,7 @@ function renderRawInline(
   const value = node.text;
   const htmlChildren = format === "html" ? rawHtmlChildren(value, `raw-inline-${String(key ?? "node")}`) : undefined;
   const Component = pickComponent(components, "raw_inline");
+  const domProps = mergeDomProps(node);
 
   if (!Component) {
     if (format !== "html") {
@@ -1307,13 +1362,14 @@ function renderRawInline(
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), htmlChildren ?? value);
+    return createElement(Component, withKey(domProps, key), htmlChildren ?? value);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         format,
         node,
         value
@@ -1334,10 +1390,9 @@ function renderUrl(
   return renderWithOverride(
     pickComponent(components, "url"),
     "a",
-    {
-      ...toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node, {
       href
-    },
+    }),
     {
       href,
       node,
@@ -1358,10 +1413,9 @@ function renderEmail(
   return renderWithOverride(
     pickComponent(components, "email"),
     "a",
-    {
-      ...toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node, {
       href
-    },
+    }),
     {
       href,
       node,
@@ -1386,14 +1440,14 @@ function renderSymb(
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey(toDomPropsFromAttributes(node.attributes), key), value);
+    return createElement(Component, withKey(mergeDomProps(node), key), value);
   }
 
   return createElement(
     Component,
     withKey(
       {
-        ...toDomPropsFromAttributes(node.attributes),
+        ...mergeDomProps(node),
         alias,
         node,
         value
@@ -1411,13 +1465,16 @@ function renderLink(
   key?: React.Key
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
+  const referenceNode = resolveReferenceNode(node, footnoteState);
+  const referenceProps = referenceNode ? toDomPropsFromNode(referenceNode) : {};
   const href = resolveReferenceDestination(node, footnoteState);
   return renderWithOverride(
     pickComponent(components, "link"),
     "a",
-    {
-      href
-    },
+    mergeDomProps(node, {
+      href,
+      ...referenceProps
+    }),
     {
       node
     },
@@ -1433,14 +1490,17 @@ function renderImage(
   key?: React.Key
 ): React.ReactNode {
   const alt = toAltText(node.children) || undefined;
+  const referenceNode = resolveReferenceNode(node, footnoteState);
+  const referenceProps = referenceNode ? toDomPropsFromNode(referenceNode) : {};
   const src = resolveReferenceDestination(node, footnoteState);
   return renderWithOverride(
     pickComponent(components, "image"),
     "img",
-    {
+    mergeDomProps(node, {
       alt,
-      src
-    },
+      src,
+      ...referenceProps
+    }),
     {
       alt,
       node
@@ -1462,10 +1522,10 @@ function renderOrderedList(
   return renderWithOverride(
     pickComponent(components, "ordered_list"),
     "ol",
-    {
+    mergeDomProps(node, {
       start,
       type
-    },
+    }),
     {
       node,
       start,
@@ -1495,7 +1555,7 @@ function renderDefinitionList(
   return renderWithOverride(
     pickComponent(components, "definition_list"),
     "dl",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -1512,16 +1572,18 @@ function renderDefinitionListItem(
 ): React.ReactNode {
   const children = renderChildren(node.children, components, footnoteState);
   const Component = pickComponent(components, "definition_list_item");
+  const domProps = mergeDomProps(node);
 
   if (Component) {
     if (typeof Component === "string") {
-      return createElement(Component, withKey({}, key), children);
+      return createElement(Component, withKey(domProps, key), children);
     }
 
     return createElement(
       Component,
       withKey(
         {
+          ...domProps,
           node
         },
         key
@@ -1544,7 +1606,7 @@ function renderBulletList(
   return renderWithOverride(
     pickComponent(components, "bullet_list"),
     "ul",
-    {},
+    mergeDomProps(node),
     {
       node,
       tight
@@ -1564,11 +1626,16 @@ function renderListItem(
   const override = pickComponent(components, "list_item");
 
   if (override) {
+    const domProps = mergeDomProps(node);
     const contentChildren = renderChildren(node.children, components, footnoteState);
     if (typeof override === "string") {
-      return createElement(override, withKey({}, key), contentChildren);
+      return createElement(override, withKey(domProps, key), contentChildren);
     }
-    return createElement(override, withKey({ node, tight: listTight }, key), contentChildren);
+    return createElement(
+      override,
+      withKey({ ...domProps, node, tight: listTight }, key),
+      contentChildren
+    );
   }
 
   const firstChild = node.children[0];
@@ -1578,7 +1645,7 @@ function renderListItem(
       : node.children;
   const contentChildren = renderChildren(inlineSource, components, footnoteState);
 
-  return createElement("li", withKey({}, key), contentChildren);
+  return createElement("li", withKey(mergeDomProps(node), key), contentChildren);
 }
 
 function renderTerm(
@@ -1591,7 +1658,7 @@ function renderTerm(
   return renderWithOverride(
     pickComponent(components, "term"),
     "dt",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -1610,7 +1677,7 @@ function renderDefinition(
   return renderWithOverride(
     pickComponent(components, "definition"),
     "dd",
-    toDomPropsFromAttributes(node.attributes),
+    mergeDomProps(node),
     {
       node
     },
@@ -1630,7 +1697,7 @@ function renderTaskList(
   return renderWithOverride(
     pickComponent(components, "task_list"),
     "ul",
-    { className: "task-list" },
+    mergeDomProps(node, { className: "task-list" }),
     { node, tight },
     key,
     children
@@ -1647,13 +1714,14 @@ function renderTaskListItem(
   const override = pickComponent(components, "task_list_item");
 
   if (override) {
+    const domProps = mergeDomProps(node);
     const contentChildren = renderChildren(node.children, components, footnoteState);
     if (typeof override === "string") {
-      return createElement(override, withKey({}, key), contentChildren);
+      return createElement(override, withKey(domProps, key), contentChildren);
     }
     return createElement(
       override,
-      withKey({ node, checkbox: node.checkbox, tight: listTight }, key),
+      withKey({ ...domProps, node, checkbox: node.checkbox, tight: listTight }, key),
       contentChildren
     );
   }
@@ -1673,7 +1741,7 @@ function renderTaskListItem(
     disabled: true,
     checked: node.checkbox === "checked"
   });
-  return createElement("li", withKey({}, key), [checkboxEl, contentChildren]);
+  return createElement("li", withKey(mergeDomProps(node), key), [checkboxEl, contentChildren]);
 }
 
 function renderBlockQuote(
@@ -1688,7 +1756,7 @@ function renderBlockQuote(
   return renderWithOverride(
     pickComponent(components, primary, alias),
     "blockquote",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -1704,19 +1772,25 @@ function renderStr(
 ): React.ReactNode {
   const value = node.text;
   const Component = pickComponent(components, "str");
+  const domProps = mergeDomProps(node);
+  const hasNodeDomProps = Object.keys(domProps).length > 0;
 
   if (!Component) {
+    if (hasNodeDomProps) {
+      return createElement("span", withKey(domProps, key), value);
+    }
     return value;
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), value);
+    return createElement(Component, withKey(domProps, key), value);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         node,
         value
       },
@@ -1733,19 +1807,25 @@ function renderNonBreakingSpace(
 ): React.ReactNode {
   const value = "\u00a0";
   const Component = pickComponent(components, "non_breaking_space");
+  const domProps = mergeDomProps(node);
+  const hasNodeDomProps = Object.keys(domProps).length > 0;
 
   if (!Component) {
+    if (hasNodeDomProps) {
+      return createElement("span", withKey(domProps, key), value);
+    }
     return value;
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), value);
+    return createElement(Component, withKey(domProps, key), value);
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         node,
         value
       },
@@ -1761,19 +1841,21 @@ function renderSoftBreak(
   key?: React.Key
 ): React.ReactNode {
   const Component = pickComponent(components, "soft_break", "softbreak");
+  const domProps = mergeDomProps(node);
 
   if (!Component) {
     return "\n";
   }
 
   if (typeof Component === "string") {
-    return createElement(Component, withKey({}, key), "\n");
+    return createElement(Component, withKey(domProps, key), "\n");
   }
 
   return createElement(
     Component,
     withKey(
       {
+        ...domProps,
         node
       },
       key
@@ -1790,7 +1872,7 @@ function renderHardBreak(
   return renderWithOverride(
     pickComponent(components, "hard_break", "hardbreak"),
     "br",
-    {},
+    mergeDomProps(node),
     {
       node
     },
@@ -1823,7 +1905,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "para"),
         "p",
-        {},
+        mergeDomProps(node),
         {
           node
         },
@@ -1836,7 +1918,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "emph"),
         "em",
-        {},
+        mergeDomProps(node),
         {
           node
         },
@@ -1847,7 +1929,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "strong"),
         "strong",
-        {},
+        mergeDomProps(node),
         {
           node
         },
@@ -1872,7 +1954,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "span"),
         "span",
-        toDomPropsFromAttributes(node.attributes),
+        mergeDomProps(node),
         {
           node
         },
@@ -1885,7 +1967,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "footnote"),
         "li",
-        {},
+        mergeDomProps(node),
         {
           index: 0,
           label: node.label,
@@ -1968,7 +2050,7 @@ export function renderNode(node: DjotNode, options: RenderNodeOptions = {}): Rea
       return renderWithOverride(
         pickComponent(components, "thematic_break"),
         "hr",
-        {},
+        mergeDomProps(node),
         {
           node
         },

@@ -65,6 +65,20 @@ describe("Djot", () => {
     expect(html).toBe('<p><img alt="logo" src="/logo.png"/></p>');
   });
 
+  it("renders inline attributes on emphasis and code", () => {
+    const source = `_hey_{.em} and \`code\`{.token}`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe('<p><em class="em">hey</em> and <code class="token">code</code></p>');
+  });
+
+  it("renders inline link attributes", () => {
+    const source = `[x](https://example.com){.btn target=_blank}`;
+
+    const html = renderToStaticMarkup(<Djot>{source}</Djot>);
+    expect(html).toBe('<p><a href="https://example.com" class="btn" target="_blank">x</a></p>');
+  });
+
   it("renders symbol aliases literally by default", () => {
     const html = renderToStaticMarkup(<Djot>{":smile:"}</Djot>);
     expect(html).toBe("<p>:smile:</p>");
