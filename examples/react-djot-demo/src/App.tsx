@@ -1,4 +1,4 @@
-import { createElement, useEffect } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 import { Djot, type DjotComponents } from "@willwang-io/react-djot";
 
 function joinClassName(...parts: Array<string | undefined>): string | undefined {
@@ -71,9 +71,13 @@ function ensureMathJaxLoaded(): Promise<void> {
         },
         { once: true }
       );
-      existingScript.addEventListener("error", () => reject(new Error("Failed to load MathJax script.")), {
-        once: true
-      });
+      existingScript.addEventListener(
+        "error",
+        () => reject(new Error("Failed to load MathJax script.")),
+        {
+          once: true
+        }
+      );
       return;
     }
 
@@ -89,7 +93,9 @@ function ensureMathJaxLoaded(): Promise<void> {
       },
       { once: true }
     );
-    script.addEventListener("error", () => reject(new Error("Failed to load MathJax script.")), { once: true });
+    script.addEventListener("error", () => reject(new Error("Failed to load MathJax script.")), {
+      once: true
+    });
     document.head.append(script);
   });
 
@@ -100,7 +106,11 @@ const demoComponents: DjotComponents = {
   heading: ({ children, className, level, ...props }) => {
     const clamped = Math.max(1, Math.min(6, level));
     const tag = `h${clamped}` as "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-    return createElement(tag, { ...props, className: joinClassName("heading", className) }, children);
+    return createElement(
+      tag,
+      { ...props, className: joinClassName("heading", className) },
+      children
+    );
   },
   mark: ({ children, className, ...props }) => (
     <mark {...props} className={joinClassName("mark", className)}>
@@ -121,29 +131,24 @@ const demoComponents: DjotComponents = {
 
 const fence = "```";
 
-const inlineDemo = `## Inline syntax
+const initialSource = `# react-djot live editor
+
+Edit Djot in the left pane. The rendered result updates in the right pane.
+
+## Inline syntax
 
 This sentence has _emphasis_, *strong*, and \`verbatim\`.
-
 {=highlighted=} + H~2~O + x^2^ + {-remove-}{+insert+}.
 
-Smart punctuation: "quotes", 'single', 57--33 and wait...
-
 Autolinks:
-<https://pandoc.org/lua-filters>
+<https://github.com/willwang-io/react-djot>
 <me@example.com>
 
-Symbols render literally by default: :rocket: :smiley:.
-
-A non-breaking space keeps words together: New\\ York.`;
-
-const blocksDemo = `## Blocks, lists, and tables
+## Blocks
 
 ::: warning
 This is a fenced div with class "warning".
 It can contain multiple paragraphs.
-
-And other blocks.
 :::
 
 > Block quote with list:
@@ -153,97 +158,60 @@ And other blocks.
 - [ ] task todo
 - [X] task done
 
-i) ordered list style
-ii) still ordered
-
-: orange
-
-  A citrus fruit.
-
 | fruit  | price |
 |--------|------:|
 | apple  |     4 |
 | banana |    10 |
 
+## Math
+
+Inline: $\`e=mc^2\`.
+
+Display:
+$$\` \\int_{0}^{\\infty} e^{-x^2}\\,dx=\\frac{\\sqrt{\\pi}}{2} \`
+
 ${fence}ts
 const prices = [4, 10];
 const total = prices.reduce((sum, n) => sum + n, 0);
 console.log(total);
-${fence}
-
-* * * *
-
-${fence} =html
-<video width="320" height="240" controls>
-  <source src="movie.mp4" type="video/mp4">
-  <source src="movie.ogg" type="video/ogg">
-  Your browser does not support the video tag.
-</video>
-${fence}
-`;
-
-const referencesDemo = `## References, math, and attributes
-
-This [inline link](https://github.com/willwang-io/react-djot) has destination.
-This [ref link][repo] and ![ref image][logo] use definitions.
-
-[repo]: https://github.com/willwang-io/react-djot
-[logo]: https://dummyimage.com/80x32/def/123.png&text=Logo
-
-Einstein: $\`e=mc^2\`.
-Display:
-$$\` x^n + y^n = z^n \`
-
-Here is a footnote reference.[^note]
-
-[^note]: Footnotes render as endnotes with backlinks.
-
-A span with attributes: [Read docs]{#docs-link .pill data-kind="demo"}.`;
-
-const demos: Array<{
-  components?: DjotComponents;
-  description: string;
-  source: string;
-  title: string;
-}> = [
-  {
-    description: "Covers emphasis, quotes, smart punctuation, autolinks, symbols, and non-breaking spaces.",
-    source: inlineDemo,
-    title: "Inline coverage"
-  },
-  {
-    components: demoComponents,
-    description:
-      "Covers divs, task lists, ordered list styles, definition lists, code blocks, tables, thematic breaks, and raw HTML blocks.",
-    source: blocksDemo,
-    title: "Block coverage + custom components"
-  },
-  {
-    description: "Covers reference links/images, inline + display math, attributes, and footnotes/endnotes.",
-    source: referencesDemo,
-    title: "References, math, and footnotes"
-  }
-];
+${fence}`;
 
 export default function App() {
+  const [source, setSource] = useState(initialSource);
+  const previewRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const target = document.querySelector(".demoStack");
+    const target = previewRef.current;
     if (!target) {
       return;
     }
 
+    let cancelled = false;
     void (async () => {
       await ensureMathJaxLoaded();
+      if (cancelled) {
+        return;
+      }
+
       const mathJax = window.MathJax;
       if (!mathJax) {
         return;
       }
+
       if (mathJax.startup?.promise) {
         await mathJax.startup.promise;
       }
+      if (cancelled) {
+        return;
+      }
+
       await mathJax.typesetPromise?.([target]);
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [source]);
 
   return (
     <>
@@ -275,27 +243,51 @@ export default function App() {
         </svg>
       </a>
       <main className="page">
-        <h1 className="title">react-djot showcase</h1>
-        <p className="subtitle">Compact syntax showcase with optional source preview.</p>
-        <div className="demoStack">
-          {demos.map((demo) => (
-            <section key={demo.title} className="card">
-              <header className="demoHeader">
-                <h2 className="demoTitle">{demo.title}</h2>
-                <p className="demoDescription">{demo.description}</p>
-              </header>
-              <section className="renderPane">
-                <Djot components={demo.components}>{demo.source}</Djot>
-              </section>
-              <details className="sourceDetails">
-                <summary>Show Djot source</summary>
-                <pre className="sourcePane compact">
-                  <code>{demo.source}</code>
-                </pre>
-              </details>
-            </section>
-          ))}
-        </div>
+        <h1 className="title">react-djot live editor</h1>
+        <section className="workspace">
+          <section className="pane">
+            <header className="paneHeader">
+              <span className="paneTitle">Editor</span>
+              <button
+                type="button"
+                className="iconButton"
+                onClick={() => setSource("")}
+                aria-label="Clear editor"
+                title="Clear editor"
+                disabled={source.length === 0}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9.75 9.75l4.5 4.5" />
+                  <path d="M14.25 9.75l-4.5 4.5" />
+                  <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </button>
+            </header>
+            <textarea
+              className="editor"
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+              aria-label="Djot editor"
+              spellCheck={false}
+            />
+          </section>
+          <section className="pane preview">
+            <header className="paneHeader">
+              <span className="paneTitle">Preview</span>
+            </header>
+            <div ref={previewRef} className="renderPane">
+              <Djot components={demoComponents}>{source}</Djot>
+            </div>
+          </section>
+        </section>
       </main>
     </>
   );
